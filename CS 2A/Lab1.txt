@@ -1,0 +1,37 @@
+#include <iostream>
+using namespace std;
+
+/*
+Madison Ell
+CS 2A
+Lab 1
+*/
+
+int main() {
+
+	//Part 0
+	cout << "Hello, World!" << endl;
+
+	//Part 1
+	string firstName = "Madison";
+	string lastName = "Ell";
+	string fullName = "My name is " + firstName + " " + lastName + ".";
+	cout << "My name is Madison Ell." << endl;
+	cout << "My name is " << firstName << " " << lastName << "." << endl;
+	cout << fullName << endl;
+
+	//Part 2
+	int numOfPets = 2;
+	string typeOfPets = "cats";
+	cout << "I would like to have " << numOfPets << " " << typeOfPets << "." << endl;
+	const int NUM_OF_PETS = 100;
+  numOfPets = NUM_OF_PETS;
+	cout << "I would like to have " << numOfPets << " " << typeOfPets << "." << endl;
+
+	//Part 3
+	string beverageName = "water";
+	double beverageAmt = 100.2;
+	bool hasIce = true;
+	cout << "I am drinking " << beverageAmt << " mL of " << beverageName << ". It has ice: " << hasIce << "." << endl;
+	return 0;
+}
