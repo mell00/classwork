@@ -1,0 +1,27 @@
+//Part 1
+6.5
+3
+2.5
+8145
+363
+
+//Part 2
+word1 word2
+
+//Part 3
+Enter a word:
+word1
+Enter another word:
+word2
+Enter a delimiter:
+
+word1 word2
+
+//Part 4
+1
+
+//Part 5
+y1
+y2
+y3
+Congratulations! You finished!
