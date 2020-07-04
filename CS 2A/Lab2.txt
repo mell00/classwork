@@ -1,0 +1,112 @@
+#include <iostream>
+using namespace std;
+
+/*
+Madison Ell
+CS 2A
+Summer 2020
+Lab 2
+*/
+
+int main() {
+	//Part 1
+	const int emp_penguin = 4;
+	const int little_penguin = 1;
+	const double glpgos_penguin = 1.5;
+	double total_hgt;
+	int emp_little_diff;
+	double emp_glpgos_diff;
+	const int mjr_glpgos_islnds = 18;
+	int mnr_glpgos_islnds;
+	const int glpgos_islnd_total = 21;
+	const int mjr_islnd_pngn_count = 403;
+	const int mnr_islnd_pngn_count = 297;
+	int glpgos_pngn_total;
+	const int empr_state_bldg = 1454;
+	int emp_pngn_empr_bldg;
+	//Q1
+	total_hgt = emp_penguin + little_penguin + glpgos_penguin;
+	cout << total_hgt << endl;
+	//Q2
+	emp_little_diff = emp_penguin - little_penguin;
+	cout << emp_little_diff << endl;
+	emp_glpgos_diff = emp_penguin - glpgos_penguin;
+	cout << emp_glpgos_diff << endl;
+	//Q3
+	mnr_glpgos_islnds = glpgos_islnd_total - mjr_glpgos_islnds;
+	glpgos_pngn_total = (mjr_glpgos_islnds * mjr_islnd_pngn_count) + (mnr_glpgos_islnds * mnr_islnd_pngn_count);
+	cout << glpgos_pngn_total << endl;
+	//Q4
+	emp_pngn_empr_bldg = empr_state_bldg / emp_penguin;
+	cout << emp_pngn_empr_bldg << endl;
+
+	//Part 2
+	string word1 = "word1";
+	string delimiter = " ";
+	string word2 = "word2";
+	cout << word1 + delimiter + word2 << endl;
+
+	//Part 3
+	string a_word;
+	string delimiter;
+	string another_word;
+	cout << "Enter a word: " << endl;
+	getline(cin, a_word);
+	cout << "Enter another word: " << endl;
+	getline(cin, another_word);
+	cout << "Enter a delimiter: " << endl;
+	getline(cin, delimiter);
+	cout << a_word + delimiter + another_word << endl;
+
+
+	//Part 4
+	string hunger_level = "high";
+	double temperature = 75.2;
+	double money = 3.00;
+	const double ice_cream_cost = 2.50;
+	bool buy_ice_cream = ((hunger_level == "high" && money >= (2 * ice_cream_cost)) || (((hunger_level == "high" && money >= ice_cream_cost) && temperature >= 75)) || (((hunger_level == "medium" && money >= (2 * ice_cream_cost)) && temperature >= 75)) || (((hunger_level == "medium" && money >= ice_cream_cost) && temperature >= 90)) || (((hunger_level == "low" && money >= (2 * ice_cream_cost)) && temperature >= 90)));
+	cout << buy_ice_cream << endl;
+
+	//Part 5
+	#include <iostream>
+		using namespace std;
+
+		int main()
+		{
+
+			bool f1 = false; bool f2 = false; bool f3 = false;
+			// Add parentheses to the code below to make each statement true
+
+			// 1.
+			int a = 8 / (1 - 1 / 5.);
+			if (a == 10)
+			{
+				cout << "y1" << endl;
+				f1 = true;
+			}
+
+			// 2.
+			double b = 15 / (7 + 0.);
+			if (b > 2)
+			{
+				cout << "y2" << endl;
+				f2 = true;
+			}
+
+			// 3.
+			double c = (3 / 3) + 3. - (1 / (5 - 3.));
+			if (c - 3.5 < 1e-18 && c >= 3.5)
+			{
+				cout << "y3" << endl;
+				f3 = true;
+			}
+
+			if (f1 && f2 && f3)
+				cout << "Congratulations! You finished!" << endl;
+			else
+				cout << "Sorry, something's not right. Keep trying!" << endl;
+			return 0;
+		}
+
+	return 0;
+}
