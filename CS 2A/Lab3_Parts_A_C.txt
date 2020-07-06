@@ -1,0 +1,18 @@
+Part A:
+
+(cond. #1) stop on yellow, 4 conditions visited
+(cond. #2) go on yellow, 5 conditions visited
+(cond. #3) stop on red, 2 conditions visited
+(cond. #4) go on green, 1 condition visited
+(cond. #5) stop on yellow, 4 conditions visited
+(cond. #6) not a valid traffic light color, 6 conditions visited
+
+Part C:
+
+double circumference(double diameter);
+
+string combination(string name, int student_id);
+
+string combo_string(string str_1, string str_2, string delimiter);
+
+double pie_per_prsn(int pies, int students);
