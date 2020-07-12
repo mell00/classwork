@@ -33,8 +33,7 @@ def print_menu():
 def menu():
     """Obtain the user's input, filter numeric values
     between 1 and 9, and print appropriate message."""
-    is_running = True
-    while is_running:
+    while True:
         print_menu()
         user_input = input("What is your choice? ")
         try:
@@ -62,7 +61,6 @@ def menu():
                 print("Data loading" + not_implemented)
             if choice_num == 9:
                 print("Goodbye!")
-                is_running = False
                 break
         else:
             print("Please enter a value between 1 and 9.")
