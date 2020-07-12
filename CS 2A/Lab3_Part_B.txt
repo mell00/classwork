@@ -1,0 +1,52 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+string weatherDescription(int temperature, bool isRaining);
+
+int main(int argc, const char* argv[]) {
+    cout << weatherDescription(30, true) << endl;
+    cout << weatherDescription(40, true) << endl;
+    cout << weatherDescription(50, true) << endl;
+    cout << weatherDescription(85, false) << endl;
+    cout << weatherDescription(95, true) << endl;
+    cout << weatherDescription(100, false) << endl;
+    return 0;
+}
+
+string weatherDescription(int temperature, bool isRaining) {
+    string output = "";
+    string delimiter = "; ";
+    if (isRaining == true) {
+        if (temperature <= 32) {
+            output += "Freezing rain";
+        }
+        else if ((temperature > 32) && (temperature < 70)) {
+            output += "Cool and rainy";
+        }
+        else if (temperature >= 70) {
+            output += "Maybe thunderstorms";
+        }
+    }
+    else if (isRaining == false) {
+        if (temperature <= 32) {
+            output += "Cold, may be snow";
+        }
+        else if ((temperature >= 70) && (temperature < 90)) {
+            output += "Nice outside";
+        }
+        else if (temperature >= 90) {
+            output += "Too hot";
+        }
+    }
+    if (temperature <= 40) {
+        output += delimiter + "It's too cold";
+    }
+    else if ((temperature >= 70) && (temperature < 90)) {
+        output += delimiter + "It's warm";
+    }
+    else {
+        output += delimiter + "It's moderate";
+    }
+    return output;
+}
