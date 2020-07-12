@@ -3,8 +3,12 @@ Assignment #4 by
     Madison Ell
     7/8/2020
     A program that asks the user for their name and returns a
-    greeting, prints the options of a main menu, then asks the user
-    for their selection and returns an appropriate message.
+    greeting. Program accepts home currency, desired currency,
+    and quantity of home currency, then converts to quantity
+    of desired currency. Includes unit testing for currency
+    conversion feature. Program prints the options of a
+    main menu, then asks the user for their selection and
+    returns an appropriate message.
 
 """
 
@@ -45,8 +49,7 @@ def print_menu():
 def menu():
     """Obtain the user's input, filter numeric values
     between 1 and 9, and print appropriate message."""
-    is_running = True
-    while is_running == True:
+    while True:
         print_menu()
         user_input = input("What is your choice? ")
         try:
@@ -74,7 +77,6 @@ def menu():
                 print("Data loading" + not_implemented)
             if choice_num == 9:
                 print("Goodbye!")
-                is_running = False
                 break
         else:
             print("Please enter a value between 1 and 9.")
