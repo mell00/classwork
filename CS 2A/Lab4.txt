@@ -1,0 +1,57 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+/*
+Madison Ell
+CS 2A
+Lab 4
+*/
+
+void sellTickets(string name, int max_tickets);
+
+void transaction(int quantity, int remaining);
+
+int main(int argc, const char* argv[])
+{
+    sellTickets("marching band", 2000);
+    return 0;
+}
+
+void sellTickets(string name, int max_tickets) {
+    int ticket_quantity;
+    int tickets_remaining = max_tickets;
+    string response = "";
+    cout << "Welcome to ticket sales for the " + name + " concert." << endl;
+    while (tickets_remaining > 0) {
+        cout << "How many tickets would you like to buy?" << endl;
+        cin >> ticket_quantity;
+        if (ticket_quantity > tickets_remaining) {
+            cout << "Would you like a partial order? (y or Y for yes)" << endl;
+            cin >> response;
+            if (response == "y" || response == "Y") {
+                ticket_quantity = tickets_remaining;
+                tickets_remaining -= ticket_quantity;
+                transaction(ticket_quantity, tickets_remaining);
+            }
+        }
+        else if (ticket_quantity > 0) {
+            tickets_remaining -= ticket_quantity;
+            transaction(ticket_quantity, tickets_remaining);
+        }
+        else if (ticket_quantity <= 0) {
+            cout << "Please choose a positive number of tickets." << endl;
+        }
+        if (tickets_remaining != 0) {
+            cout << "Next customer, please." << endl;
+        }
+        else {
+            break;
+        }
+    }
+    cout << "The tickets are sold out!" << endl;
+}
+
+void transaction(int quantity, int remaining) {
+    cout << "You have purchased " << quantity << " tickets, and there are " << remaining << " tickets remaining." << endl;
+}
