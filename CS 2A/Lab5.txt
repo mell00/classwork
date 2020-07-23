@@ -1,0 +1,114 @@
+Compiler errors
+
+Part 1
+
+1. Answer 1 for Part 1:
+
+Visual Studio 2019
+
+2. Answer 2 for Part 1:
+
+In function 'int main(int, const char**)':
+28:5: error: expected ';' before 'name'
+
+3. Answer 3 for Part 1:
+
+The error message appears on line 28 of the code.
+
+
+Put this code, which contains the same bug, into the online editor cpp.sh:
+
+#include <iostream>
+using namespace std;
+
+int main(int argc, const char * argv[]) {
+    string greeting;
+    string name;
+    greeting = "Hello"
+    name = "everyone";
+    cout << greeting << ", " << name << endl;
+    return 0;
+}
+
+4. Answer 4 for Part 1:
+
+In function 'int main(int, const char**)':
+8:5: error: expected ';' before 'name'
+
+5. Answer 5 for Part 1:
+
+The message appears on the 8th line of code.
+
+6. Answer 6 for Part 1:
+
+No. The problem appears on the 7th line of code.
+
+7. Answer 7 for Part 1:
+
+To fix the problem, add a semicolon to the end of the 7th line of code.
+
+8. Answer 8 for Part 1:
+
+The error messages are unclear as they indicate a different line of code from where the
+problem is actually located.
+
+
+Part 2
+
+1. Answer 1 for Part 2:
+
+117:5: error: expected unqualified-id before 'return'
+119:1: error: expected declaration before '}' token
+
+2. Answer 2 for Part 2:
+
+The messages appear on the 117th and 119th lines of code.
+
+3. Answer 3 for Part 2:
+
+On the 37th line of code, there exists a space between the first closing brace and the last
+three closing braces.
+
+4. Answer 4 for Part 2:
+
+The 37th line of code contains an extra closing brace.
+
+5. Answer 5 for Part 2:
+
+No; the error does not appear on line 37.
+
+6. Answer 6 for Part 2:
+
+The use of autocomplete and delimiter highlighting could have prevented the bug.
+
+
+Part 3
+
+1. Answer 1 for Part 3:
+
+In function 'int main(int, const char**)':
+48:37: error: 'numHamsters' was not declared in this scope
+
+2. Answer 2 for Part 3:
+
+http://www.cplusplus.com/forum/beginner/186678/
+
+3. Answer 3 for Part 3:
+
+The variable 'numHamsters' is referenced on line 48, but was never declared and assigned
+a value in the first place. Assigning values at the points of declaration of the 'numDogs' and
+'numCats' variables, as shown with the 'numParrots' variable, more efficiently organizes the
+code and may have made it more obvious that a similar statement does not exist for 'numHamsters'.
+
+
+Part 4
+
+I already declared a variable to hold the student ID number, but the compiler says this variable is not
+declared. From the module about this (Debugging: Finding and eliminating bugs), the compiler errors section
+addresses this very common error. What does it suggest we can do if we can’t see a problem with an undeclared
+variable?
+
+1. Answer 1 for Part 4:
+
+The debugging module suggests copying and pasting the variable from a declaration and comparing
+it to the undeclared identifier referenced in the compiler message to check for spelling errors.
