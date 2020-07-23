@@ -21,21 +21,6 @@ In function 'int main(int, const char**)':
 
 The error message appears on line 28 of the code.
 
-
-Put this code, which contains the same bug, into the online editor cpp.sh:
-
-#include <iostream>
-using namespace std;
-
-int main(int argc, const char * argv[]) {
-    string greeting;
-    string name;
-    greeting = "Hello"
-    name = "everyone";
-    cout << greeting << ", " << name << endl;
-    return 0;
-}
-
 4. Answer 4 for Part 1:
 
 In function 'int main(int, const char**)':
