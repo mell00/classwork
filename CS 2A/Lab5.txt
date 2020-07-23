@@ -1,3 +1,9 @@
+/*
+Madison Ell
+CS 2A
+Lab 5
+*/
+
 Compiler errors
 
 Part 1
@@ -103,12 +109,189 @@ code and may have made it more obvious that a similar statement does not exist f
 
 Part 4
 
-I already declared a variable to hold the student ID number, but the compiler says this variable is not
-declared. From the module about this (Debugging: Finding and eliminating bugs), the compiler errors section
-addresses this very common error. What does it suggest we can do if we can’t see a problem with an undeclared
-variable?
-
 1. Answer 1 for Part 4:
 
 The debugging module suggests copying and pasting the variable from a declaration and comparing
 it to the undeclared identifier referenced in the compiler message to check for spelling errors.
+
+
+Logical bugs
+
+Part 5
+
+1. Answer 1 for Part 5:
+
+The output of the code is 14. The expected output is 30.
+
+2. Answer 2 for Part 5:
+
+Printing the loop counter within the for loop shows where the iteration fails.
+
+Part 6
+
+1. Answer 1 for Part 6:
+
+No, the code that evaluates whether I have enough money to buy the item, as well as the expected
+amount of money remaining, does not work properly.
+
+2. Answer 2 for Part 6:
+
+We can check whether the buyIt function got called by adding a print statement containing either a string
+or the arguments of the function at the first line of the function. Another way to check is to step
+through the function using a debugger.
+
+3. Answer 3 for Part 6:
+
+We can check which conditional statement was used by printing unique strings within each
+conditional statement for use in identification.
+
+4. Answer 4 for Part 6:
+
+#include <iostream>
+using namespace std;
+
+double buyIt(double myMoney, double cost) {
+    cout << myMoney << endl;
+    cout << cost << endl;
+    myMoney -= cost;
+    cout << myMoney << endl;
+    return myMoney;
+}
+
+int main(int argc, const char * argv[]) {
+    double myMoney = 5;
+    double cost = 10;
+    double interestRate = 0.10; // for math ease, not in this century!
+
+    if (myMoney < cost)
+        myMoney = buyIt(myMoney,cost);
+    else
+        myMoney = myMoney * interestRate;
+    cout << "Now I have this much money: " << myMoney << endl;
+    return 0;
+}
+
+Part 7
+
+1. Answer 1 for Part 7:
+
+isSingleDigitPositive = (10 > 0 || 10 < 10); isSingleDigitPositive evaluates to (true || false),
+which then evaluates to true. The following string is printed: "10 is a single-digit, positive number: 1".
+The value of isSingleDigitPositive should be false, as 10 is not a single digit positive number.
+
+2. Answer 2 for Part 7:
+
+The code outputs "-4 is a single-digit, positive number: 1", which is incorrect.
+
+3. Answer 3 for Part 7:
+
+#include <iostream>
+using namespace std;
+
+int main(int argc, const char * argv[]) {
+    int number = 10;
+    bool isSingleDigit = (number < 10);
+    bool isPositive = (number > 0);
+    bool isSingleDigitPositive = (isPositive || isSingleDigit);
+
+    cout << number << " is a single-digit, positive number: " << isSingleDigitPositive << endl;
+    return 0;
+}
+
+Both -4 and 10 return a true value.
+
+4. Answer 4 for Part 7:
+
+The value of isSingleDigitPositive should depend on whether or not the halves of the conditional are
+both true (&& operator), not just one or the other (|| operator).
+
+Part 8
+
+1. Answer 1 for Part 8:
+
+#include <iostream>
+using namespace std;
+
+double get_cake_per_student(int num_cakes, int num_students) {
+    // note this function could be 1 line without the local variable
+    cout << num_cakes << endl;
+    cout << num_students << endl;
+    double cake_fraction_per_student = num_cakes / num_students;
+    cout << cake_fraction_per_student << endl;
+    return cake_fraction_per_student;
+}
+
+int main(int argc, const char * argv[]) {
+    int num_cakes = 2;
+    int num_students = 15;
+    double cake_fraction_per_student = get_cake_per_student(num_cakes,num_students);
+    cout << "We should have this total number of cakes: " << num_cakes << endl;
+    cout << "Total number of cakes should be number of students times fraction of cake per student: " << num_students * cake_fraction_per_student << endl;
+    return 0;
+}
+
+2. Answer 2 for Part 8:
+
+The error is outside the function.
+
+3. Answer 3 for Part 8:
+
+The arguments for 'get_cake_per_student' are integer data types when they should be doubles.
+
+4. Answer 4 for Part 8:
+
+It would be better to change the integer data types of the variables into doubles.
+
+
+Part 9
+
+1. Answer 1 for Part 9:
+
+The interest on $10 and $10.50 should be different; the interest for $10.50 given a 10% interest rate should be $1.05.
+
+2. Answer 2 for Part 9:
+
+Yes, the value inside the function, 1, is the same for both $10 and $10.50.
+
+3. Answer 3 for Part 9:
+
+The values of the 'money' and 'rate' variables are 10 and 0.1 for both $10 and $10.50, which should not be the case.
+
+4. Answer 4 for Part 9:
+
+The variable 'myMoney' has an integer data type; it will truncate any decimal value that 'myMoney' is assigned to.
+
+5. Answer 5 for Part 9:
+
+Multiplying the product by 1.0 will not help, as the issue lies in the data types of 'money' and 'myMoney'.
+
+Part 10
+
+1. Answer 1 for Part 10:
+
+The code block of the if statement executed.
+
+2. Answer 2 for Part 10:
+
+The code block of the else statement should have executed.
+
+3. Answer 3 for Part 10:
+
+int x = 6;
+    cout << "x is " << x << endl;
+
+    if (x = 1) {
+        cout << x << endl;
+        cout << "x plus 1 is 2" << endl;
+    }
+    else {
+        cout << "x is " << x << endl;
+    }
+
+4. Answer 4 for Part 10:
+
+The if statement assigns 'x' a value of 1.
+
+5. Answer 5 for Part 10:
+
+The comparison operator is ==, and the assignment operator is =.
