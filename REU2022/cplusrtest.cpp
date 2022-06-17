@@ -8,7 +8,7 @@ using namespace std;
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-  void Metropolis::Metropolis(int n, double mean, double sd, double mu, double delta,
+  Metropolis::Metropolis(int n, double mean, double sd, double mu, double delta,
   int df, int ncp, int timesRepeat, int timesRepeat2, double propmu, double mustar)
   {
     m_n = n;
@@ -25,6 +25,13 @@ using namespace Rcpp;
     m_mustar = mustar;
   }
 
+  Metropolis::~Metropolis()
+  {
+    delete[] m_valArray;
+    delete[] m_mu;
+    return 0;
+  }
+
   double Metropolis::rnorm(int n, double mean, double sd)
   {
     int numString[n];
@@ -37,7 +44,7 @@ using namespace Rcpp;
     return numString;
   }
 
-  double Metropolis::dnorm(int valArray, double mu, double delta)
+  double Metropolis::dnorm(int* valArray, double mu, double delta)
   {
     return exp(((n-mean)^2/2*sd^2))/(sd*sqrt(2*pi));
   }
@@ -51,7 +58,7 @@ using namespace Rcpp;
     return postMatrix;
   }
 
-  double Metropolis::logPostDensity(double mu)
+  double Metropolis::logPostDensity(double* mu)
   {
     return log(Rcpp::dt(mu,df,ncp)) + sum(log(dnorm(valArray,mu,delta)));
   }
