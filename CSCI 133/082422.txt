@@ -133,8 +133,24 @@ Move Semantics
 - Move assignment
   - similar to copy assignment but uses semantic from the move constructor
 
-Vectors
--------
+Strings and Vectors
+-------------------
+#include <string>
 #include <vector>
--syntax: vector<int> data;
+-string syntax: string s = "Hello!";
+-vector syntax: vector<int> data = {stuff};
+-can access characters inside strings and vectors using bracket notation or .at(), like arrays
+  -the difference is that .at() checks if index is out of bounds against the length of the string/array, but is slower than bracket notation
 -like an array, but it does its own memory management (does new and delete behind the scenes)
+- .size() returns the length of a string/vector except for the terminating NULL at the end
+- shorthand loop for checking each character in string/vector:
+  for (char c:s) //c is an int for a vector and a char for a string
+    cout << c << endl;
+- .push_back(int value) adds a value to the end of a vector
+    - very efficient and fast
+- C++ CANNOT increase the size of an array on its own; rather, it can create a new vector of bigger size and copy values of an existing array into it
+
+Assignment #1: ordered_array
+----------------------------
+-in an ordered_array, items are sorted in ascending order
+-create an ordered_array class, like the bag class but with functions that keep items sorted in ascending order
