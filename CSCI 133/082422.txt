@@ -1,0 +1,140 @@
+The Bag Data Structure
+----------------------
+- a bag holds a collection of items, possibly including duplicates where adding/removing
+items may reorder existing items
+
+members of class Bag:
+- int sz = 4
+- int cap = 8
+- int data = array of size 7, where index 0 to 3 are in-use -> |2|-3|7|5| | | | |
+
+- .insert(int sz)
+
+insert(5)
+---------
+now sz = 5, cap = 8, and data = |2|-3|7|5|5| | | |
+-note: no use in shuffling items when inserting a value
+
+remove(-3)
+---------
+now sz = 4, cap = 8, and data = |2|5|7|5| | | | |
+-swaps -3 with the last 5, then remove -3
+-note: in memory, -3 previously in data[4] still remains
+
+int count(int x){
+  int c = 0;
+  for (int i = 0; i < size(); ++i)
+    if(at(i) == x)
+      ++c;
+    // can also be written as c += (at(i) == x)
+  return c;
+}
+
+bool exists(int x){
+  for (int i = 0; i < size(); ++i)
+    if(at(i) == x)
+      return true;
+  return false;
+}
+
+bag(const bag& original){ // "deep" copy constructor; const is a promise that copy wont be modified, reference refers to original bag
+  cap = original.cap;
+  // cap = original.capacity() returns an error
+  sz = original.sz;
+  data = new int[cap]; //creates separate but identical data array pointer as original
+  for (int i = 0; i < size(); ++i)
+    data[i] = original.data[i] // copies items from original array
+}
+
+bag& operator= (const bag& original){ //overloads the meaning of equating one bag to another
+  if(this != &original){ // checks to avoid self-assignment
+    delete[] data;
+  }
+  cap = original.cap;
+  // cap = original.capacity() returns an error
+  sz = original.sz;
+  data = new int[cap]; //creates separate but identical data array pointer as original
+  for (int i = 0; i < size(); ++i)
+    data[i] = original.data[i] // copies items from original array
+
+  return *this; //if a = b = c, b = c becomes b and now a = b. assignment happens left to right
+
+}
+
+~bag(){ // destructor function for bag
+  delete[] data;
+}
+
+private:
+  int* data = nullptr;
+  int cap, sz;
+};
+
+Memory in C++
+-------------
+-Automatic (stack):
+  -ex:
+    void f(){
+      int x = 0; // x is automatically stored in the stack
+      :
+      :
+      return x; // function returns a COPY of the value stored in x
+    }
+    int y = f(); // the copy of the x value is stored in y
+-Dynamic (heap):
+   -ex:
+    void f(){
+      int *p = new int; // p is a normal variable that dies, but "new int" lives on until it is deleted
+        // pointers can exist in other functions
+    }
+    :
+    :
+    delete[] p;
+
+going back to the bag class....
+
+in bag b(8):
+cap = 8, sz = 3, and data is a pointer to a size 8 array |3|-2|7| | | | | |
+
+now suppose bag c = b
+in bag c:
+cap = 8, sz = 3, and data is a pointer to a size 8 array |3|-2|7| | | | | |
+  -there's a problem though; if you c.remove(3), then the same will be applied to b
+  - "the Big 3" functions, destructors, copy constructor, and the copy assignment
+    - if a destructor is added to bag b, it runs in both bags and deletes the array twice instead of once
+
+Rule of Zero
+------------
+- unless you NEED to use new, don't.
+- write classes so that you don't need to worry about this
+
+Move Semantics
+--------------
+-if you're making a copy from something that will be deleted shortly, then why not steal/move it?
+- ex:
+  bag f()
+  {
+    bag b(10); //new -|
+    :                 |
+    :                 |
+    return b;  delete<----
+  }                      | copy ctor
+  bag q = f();       <----
+- Move constructor
+  - bag(bag&& victim){ // "steals" information from victim bag
+      cap = victim.cap;
+      sz = victim.sz;
+
+      //Steal the data and leave the victim with nothing!
+      data = victim.data;
+      victim.data = nullptr;
+  }
+
+- Move assignment
+  - similar to copy assignment but uses semantic from the move constructor
+
+Vectors
+-------
+#include <vector>
+-syntax: vector<int> data;
+-like an array, but it does its own memory management (does new and delete behind the scenes)
