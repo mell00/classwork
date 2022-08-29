@@ -139,14 +139,17 @@ Strings and Vectors
 #include <vector>
 -string syntax: string s = "Hello!";
 -vector syntax: vector<int> data = {stuff};
+    - <int> is the "element type", the type of stuff in a vector
 -can access characters inside strings and vectors using bracket notation or .at(), like arrays
   -the difference is that .at() checks if index is out of bounds against the length of the string/array, but is slower than bracket notation
 -like an array, but it does its own memory management (does new and delete behind the scenes)
 - .size() returns the length of a string/vector except for the terminating NULL at the end
+- strings can be indexed
+    - ed: cout << s[4] << endl returns a char in position 3 of string s, like vectors and arrays
 - shorthand loop for checking each character in string/vector:
   for (char c:s) //c is an int for a vector and a char for a string
     cout << c << endl;
-- .push_back(int value) adds a value to the end of a vector
+- .push_back(int value) adds a value to the end of a vector or string
     - very efficient and fast
 - C++ CANNOT increase the size of an array on its own; rather, it can create a new vector of bigger size and copy values of an existing array into it
 

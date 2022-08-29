@@ -1,0 +1,164 @@
+The Bag Data Structure
+----------------------
+- const correctness
+    - ex: const bag& br = b;
+        -br is a "view" of b, and compiler won't allow use of operation member functions to modify br
+    - int size() const {return sz;}; the const is a "promise" that the operation won't modify a bag
+        - able to overload const functions; version of code with a const and version of
+          same code without for const and non-const bags respectively
+- template class
+    - syntax: template<typename .....> (typename is defined later)
+      bag<int> function (typename is defined as an int here)
+    - not used for loop counters, template type only refers to what is in the bags
+    - at end of function, return typename{} returns the default (0 for int)
+
+String Splitting
+----------------
+Write a function called "split" that takes a string and returns a vector of strings
+final = vector<string> split(string s); // can also be written as auto split(string s) -> vector<string>;
+// vector<string> is the return type, string s is the parameter
+s = "The cat  in the   hat  "
+:
+:
+final = {"The","cat","in","the","hat"}
+
+Finite State Machine (DFA)
+--------------------------
+- a "machine" that scans through an input string from left to right one char at a time and performs
+  actions (depending on what you want to do)
+  - actions:
+    - ignore the char
+    - "start" a new word
+    - "finish" a word
+    - add char to word
+  - has a "state" (what was I doing right before looking at current char?), its memory.
+    - can switch states or stay in same state
+  -states:
+    - SPACE: the machine was processing space(s)
+    - WORD: the machine was processing a word
+  -can create a table of state and char:
+
+              space char           non-space char    end of string
+         +--------------------------------------------------------+
+         |#1) ignore char      |#2 start new word   |             |
+  SPACE  |   stay in SPACE     |  switch to WORD    | return      |
+         |                     |                    |             |
+         |---------------------+--------------------+-------------|
+         |#3) finish word      |#4) add to word     |             |
+   WORD  |   stay in SPACE     |   stay in WORD     | finish word |
+         |                     |                    |             |
+         +--------------------------------------------------------+
+ex:
+
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+vector<string> split(string s)
+{
+    vector<string> words;
+    string w;
+    enum {SPACE,WORD} state = WORD; // defines variable named state that can only be STATE or WORD
+
+    for(char c : s) {
+      if(state == SPACE and c == " "){
+        //#1: Ignore char, stay in SPACE
+      }
+      else if(state == SPACE and c != " "){
+        //#2: Start new word, switch to WORD
+        w.clear();
+        w.push_back(c);
+        state = WORD;
+      }
+      else if(state == WORD and c == " "){
+        //#3: Finish word, switch to SPACE
+        words.push_back(w);
+        state = SPACE;
+      }
+      else if(state == WORD and c != " "){
+        //#4: Add to word, stay in WORD
+        w.push_back(c);
+      }
+    }
+    if (state == WORD){
+      words.push_back(w);
+    }
+    return words;
+}
+
+int main()
+{
+  string input;
+  getline(cin, input); //<- gets full sentence with whitespaces
+  vector<string> words = split(input);
+
+  for (string w : words)
+    cout << w << endl;
+}
+
+Analyzing Algorithms
+--------------------
+- in terminal, time ./program measures time it takes for program to run
+- step-wise analysis: abstractly counting how many times some operation(s) is performed in a function
+  -ex: int sum(const vector<int>& v) // takes a vector and adds its elements
+        {
+          int s = 0;
+          for (int i = 0; i < v.size(); ++i)
+            s = s + v[i];
+          return s;
+        }
+        - two operations here: for a vector v of size n, count how many times...
+          - assignment to s (s = ....)
+          - subscript into a vector (v[...])
+          s = ....    1 + n
+          v[...]      n
+  -another ex: int smallest(const vector<int>& v)
+                {
+                  int s = v[0];
+                  for (int i = 0; i < v.size(); ++i)
+                    if (v[i] < s)
+                      s = v[i];
+                return s;
+                }
+                            best           worst
+                -----------------------------------------
+                s = ....    1                n
+                v[...]      1 + n           2n
+                      (smallest first)  (descending)
+  -yet another ex: bool is_sorted(const vector<int>& v)
+                   {
+                      for (int i = 0; i < v.size() - 1; ++i)
+                        if (v[i] > v[i+1]) // runs n-1 times
+                          return false;
+
+                      return true;
+                   }
+                             best           worst
+                 -----------------------------------------
+                 v[...]      2                2(n-1)
+                            (v[0] > v[1])     (sorted)
+                - when n is not present, the size of the vector does not affect the
+                  runtime of the function
+  -yet another ex: bool is_sorted(const vector<int>& v)
+                    {
+                        int l = v[0];
+                        for (int i = 0; i < v.size() - 1; ++i)
+                            int n = v[i];
+                            if (l > n) // runs n-1 times; saves last value l for comparison
+                              return false;
+                            l = n;
+
+                          return true;
+                    }
+                                best           worst
+                  -----------------------------------------
+                   v[...]      2                n
+                               (v[0] > v[1])    (sorted)
+- asymptotic analysis: describes the relationship between input size and runtime, abstracted
+  - Big-O notation
+    -ex: f(n) = O(n^2) (is you increase the size of your input n, the runtime is roughly proportional
+          to n^2, as n becomes large)
+    -ex: suppose f(n) = O(g(n)). That means that f(n) <= k g(n) for n > n_0, where k is a
+    "roughly proportional" constant, and n_0 is a minimum value when the input n "becomes large"
+        - can be written as the limit as n goes to infinity of f(n)/g(n) is finite
