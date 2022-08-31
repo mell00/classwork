@@ -1,0 +1,193 @@
+Analysis of Algorithms
+----------------------
+-Step-wise analysis: "counting" operations
+-asymptotic (Big-O) analysis: "roughly proportional" families of growth functions
+- note: ++i couts newly incremented value, but i++ couts old value before increment
+  - ++i is faster, because i++ has to remember both old and new values
+ex: int count(const vector<int>& v, int x)
+    {
+      int c = 0; //counter variable
+      for (int i = 0; i < v.size(); ++i)
+        if(v[i] == x)
+          c = c + 1;
+      return c;
+    }
+
+    Count how many times...
+      c = ....      best case: 1        worst case: 1 + n
+      v[...]        best case: n        worst case: n
+                    No x                {x,x,x,...}
+    occur for an input of size n
+
+ex: bool exists(const vector<int>& v, int x)
+    {
+      for (int i = 0; i < v.size(); ++i)
+        if(v[i] == x)
+          return true;
+      return false;
+    }
+    Count how many times...
+                        O(1)                O(n)
+      c = ....      best case:          worst case:
+      v[...]        best case: 1        worst case: n
+                    {x, ....}           No x
+    occur for an input of size n
+
+Big-O Analysis
+--------------
+- grouping algorithms into "families" of growth functions
+- ex: "The count function runs in O(n)" (the runtime of the count function grows roughly
+  linearly with the vector's size)
+- definition: if f(n) = O(g(n)), this means f(n) <= kg(n) for all n > n_0 and where
+  k represents the "rough proportion" and n_0 represents the minimum "big enough" n
+- rules:
+  - O(2n) = O(n) discard constant multiples
+    - applies to multiple loops not nested together
+  - O(3n^2 + 0.5n^4 + 5nlog(n)) = O(n^4) discard all but the fastest growing term in a sum
+  - look for the piece of code that takes the most time
+  - note: O(...) is an upper bound
+-Big-O notations of lines of code
+ex: int sum(const vector<int>& v) //without reference, O(n). with reference, O(1)
+    {
+      int s = 0; // O(1), as it doesn't depend on size of vector
+      for (int i = 0; i < v.size(); ++i) //n * O(1) = O(n)
+        s = s + v[i]; // v[i] is O(1)
+      return s; // O(1)
+    } // total runtime = O(1 + 1 + n + 1) = O(n + 3) = O(n)
+
+  ex: int smallest(const vector<int>& v) // O(1)
+      {
+        int s = v[0]; // O(1)
+        int i = 0; // O(1)
+        while(i < v.size()){
+          if(v[i] < s) // O(1)
+            s = v[i] // O(1)
+          ++i; // O(1)
+        } // for the whole loop, n * O(1 + 1 + 1) = O(3n) = O(n)
+        return s; // O(1)
+      } // total runtime = O(1 + 1 + 1 + n + 1) = O(n + 4) = O(n)
+
+                                          best case       worst case
+  ex: bool sorted(const vector<int>& v)   O(1)            O(1)
+      {
+        int i = 0;                        O(1)            O(1)
+        while(i < v.size() - 1){          total : 1 x O(1)     (n - 1) x O(1) = O(n)
+          if(v[i] > v[i+1])               O(1)            O(1)
+            return false;                 O(1)            O(1)
+          ++i;                            O(1)            O(1)
+        }
+        return true;                      O(1)            O(1)
+      }                                   best = O(1)     worst = O(n)
+
+
+                                        best case       worst case
+ex: bool sorted(const vector<int> v)   O(n)            O(1)       // the reference makes best case O(n) as opposed to O(1)
+{
+int i = 0;                              O(1)            O(1)
+while(i < v.size() - 1){                total : 1 x O(1)     (n - 1) x O(1) = O(n)
+if(v[i] > v[i+1])                       O(1)            O(1)
+return false;                           O(1)            O(1)
+++i;                                    O(1)            O(1)
+}
+return true;                            O(1)            O(1)
+}                                       best = O(n)     worst = O(n)
+
+                                        best case       worst case
+ex: bool has_duplicate(const vector<int> & v) // O(1)
+    {
+      for (int i = 0; i < v.size(); ++i){ // n * O(1 + n) = O(n^2)
+        int x = v[i]; // O(1)
+        for (int j = 0; j < v.size(); ++j) // n * O(1) = O(n)
+          if (i != j) // O(1)
+            if (v[j] == x) O(1)
+              return true; O(1)
+      }
+      return false; //O(1)
+    }
+
+    best case: O(1) where i and j are copies
+    worst case: O(1 + n^2 + 1) = O(n^2)
+
+Nested "Dependant" Loops
+------------------------
+
+ex: for (int i = 0; i < n; ++i)
+      for(int j = i; j < n; ++j) // as the outer loop gets closer and closer to n,
+      :                             the inner loop does less and less work
+      : // O(1)
+      :
+    total = nO(1) + (n-1)O(1) + ... + (2)O(1) + (1)O(1)
+          = O(1)(n + (n-1) + ... + 2 + 1), which is a sum
+    s = 1 + 2 + ... + (n-1) + n
+    2s = 1 + 2 + ... + (n-1) + n +
+        (n) + (n-1) + ... + 2 + 1
+
+    so 2s = (1 + n) + (1 + n) + ... + (1 + n) + (1 + n), a total of n (1 + n)s
+    and s = n(n+1)/2
+
+    so total = O(1) n(n+1)/2 = O((n^2+n)/2) = O(n^2
+
+ex: for(int i = n; i >= 1; i = i/2)
+      :
+      : // O(1)
+      n = 2^k, n/2 = 2^(k-1), n/4 = 2^(k-2), n/8 = 2^(k-3), ....., 1 = 2^0
+      total = O(log_2(n))
+
+- Maximal Contiguous Subsequence Sum Problem (MCSS)
+  -------------------------------------------------
+  - suppose we have a sequence {-2, 1, 3, -5, 4, 7, -2, 3, -4}
+  - an contiguous subsequence (CS) is a subsequence with no gaps (but can be empty)
+  - the sum of a CS is the sum of its values (an empty CS sums to 0)
+  - goal is to find the CS which sums to the maximum value (sum of {4, 7, -2, 3} = 12)
+  attempt #1:
+  int mcss(const vector<int>& v) // sums everytime k is incremented
+  {
+    int largest_sum = 0;
+    for (int i = 0; i < v.size(); ++i)
+      for (int j = 0; j < v.size(); ++j)
+      {
+        int sum = 0;
+        for (int k = 0; k < v.size(); ++k)
+          if(k >= i and k <= j)
+            sum += v[k];
+        if (sum > largest_sum)
+          largest_sum = sum;
+      }
+    return largest_sum;
+  }
+  total = O(n^3)
+
+  attempt #2:
+  int mcss(const vector<int>& v) // now saves old sum and adds next number at each step
+  {
+    int largest_sum = 0;
+    for (int i = 0; i < v.size(); ++i)
+    int sum = 0;
+      for (int j = 0; j < v.size(); ++j)
+      {
+      if(j >= i)
+      {
+        sum += v[j];
+        if (sum > largest_sum)
+          largest_sum = sum;
+      }
+      }
+    return largest_sum;
+  }
+  total = O(n^2)
+
+  attempt #3:
+  int mcss(const vector<int>& v) // discards any prefix that adds up to a negative value;
+                                    restarts search any time the current sum falls below 0
+  {
+    int largest_sum = 0;
+    int sum = 0;
+    for (int i = 0; i < v.size(); ++i)
+      sum += v[i];
+      if(sum > largest_sum) //no way for negative value to be true
+        largest_sum = sum;
+      else if (sum < 0)
+        sum = 0;
+      return largest sum;
+  }
+  total = O(n)
