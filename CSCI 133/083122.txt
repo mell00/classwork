@@ -139,13 +139,14 @@ ex: for(int i = n; i >= 1; i = i/2)
   - an contiguous subsequence (CS) is a subsequence with no gaps (but can be empty)
   - the sum of a CS is the sum of its values (an empty CS sums to 0)
   - goal is to find the CS which sums to the maximum value (sum of {4, 7, -2, 3} = 12)
-  attempt #1:
+  attempt #1 (brute force):
   int mcss(const vector<int>& v) // sums everytime k is incremented
   {
     int largest_sum = 0;
     for (int i = 0; i < v.size(); ++i)
       for (int j = 0; j < v.size(); ++j)
       {
+        # sums elems between v[i] ... v[j]
         int sum = 0;
         for (int k = 0; k < v.size(); ++k)
           if(k >= i and k <= j)
@@ -191,3 +192,10 @@ ex: for(int i = n; i >= 1; i = i/2)
       return largest sum;
   }
   total = O(n)
+
+  int main()
+  {
+    vector<int> v(iterations, 0);
+    for (int& x : v)
+      x = rand();
+  }
