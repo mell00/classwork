@@ -1,0 +1,208 @@
+Linked lists
+------------
+   insert(A)
+     ------
+     -how to insert a new node between node A and node B:
+       (1) create a new node n // O(1)
+       (2) point n next to B // O(1)
+       (3) point A next to n // O(1)
+       - note: can't go backwards to A
+       - A is the parameter and B is the output
+   -special cases:
+     -inserting a new head (insert(A==nullptr))
+       (1) create a new node n // O(1)
+       (2) point n's next to existing head B // O(1)
+       (3) point "head" to n // O(1)
+
+     -insert a new tail (insert(A==tail))
+       (1) create a new node n // O(1)
+       (2) point n's next to nullptr (A's next)
+       (3) point A's next to n
+
+     -insert 1st node (insert(A==nullptr))
+       (1) create a new node n // O(1)
+       (2) point n's next to nullptr (head)
+       (3) point "head" next to n
+       (4) point "tail" to n
+
+   erase(A)
+   ------
+      -need A as a parameter because A points to n
+      -how to erase a node between node A and node B:
+        (0) label the target node n
+        (1) point A next to B (n's next and A's next next)
+        (2) Delete n
+      -erase the head (erase(A == nullptr))
+        (0) label the target node n
+        (1) point head next to B (n's next and head's next next)
+        (2) Delete n
+      -erase the tail (A's next next = null, A's next = tail)
+        (0) label the tar
+        get node n
+        (1) point A next to nullptr
+        (2) Delete n
+        (3) point tail to A
+      -erase last existing node (A == nullptr, head == tail)
+        (0) label the target node n
+        (1) point head next to nullptr (n's next)
+        (2) Delete n
+        (3) point tail to nullptr(A)
+
+Reversing a Linked list
+-----------------------
+-can do so by making a copy of each node and constructing the list in reverse by inserting new heads
+
+reverse(l): (not in-place; uses double memory as original list)
+  n  = l.head
+  c = new list
+  while n != nullptr:
+    c.push_front(n.value)
+    n = n.next
+  return c;
+
+reverse(): (in-place)
+
+class slist {
+  public:
+    struct node
+      {
+        int value;
+        node* next;
+      };
+    bool empty()
+      {
+        return hd == nullptr and tl == nullptr;
+      }
+
+    void insert(node* a, int x)
+    {
+      if(a == nullptr) {
+        // Insert new head
+        hd = new node{x,hd}; // {value,next}
+
+        if(tl == nullptr){
+          tl = n;
+        }
+      }
+      else {
+        // Insert after a
+        a->next = new node{x,a->next} //only working with node POINTERS
+
+        if(a == t1)
+          t1 = n;
+      }
+    }
+
+    void erase(node* a, int x)
+    {
+      if(empty()) return;
+      if(a == nullptr) {
+        // Erase head
+        node* n = hd;
+        hd = n->next;
+
+        if (tl == n)
+          tl = nullptr;
+
+        delete n;
+
+        if(tl == nullptr){
+          tl = n;
+        }
+      }
+      else {
+        // Erase a->next
+        node* n = a->next;
+        a->next = n->next;
+
+        if(tl==n)
+          tl = a;
+        delete n; //only working with node POINTERS
+
+        if(a == t1)
+          t1 = n;
+      }
+    }
+
+    void push_front(int x)
+    {
+      insert(nullptr, x);
+    }
+
+    void push_back(int x)
+    {
+      insert(tl, x);
+    }
+
+    void pop_front() //faster than pop_back()
+    {
+      erase(nullptr)
+    }
+
+    void pop_back()
+    {
+      node* n = hd;
+      while(n->next != tl)
+        n = n->next; // moves along the nodes, does not change anything about the list
+      erase(n);
+    }
+
+    int size()
+    {
+      int s = 0;
+      node* n = hd;
+      while(n != nullptr //O(n) complexity when s does not default to 0
+        ++s;
+        n = n->next;
+      }
+
+    node* at(int i)
+    {
+      int s = 0;
+      node* n = hd;
+      while(n != nullptr and s != i) {
+        ++s;
+        n=n->next;
+      }
+      return n;
+    }
+
+    void print()
+    {
+      node* n = hd;
+      while(n != nullptr){ //O(n) complexity
+        cout << n->value << endl;
+        n = n->next;
+      }
+
+      // OR
+
+      for (int i = 0; i < size(); ++i)
+        cout << at(i)->value << endl; //O(n^2) complexity
+    }
+
+    void clear()
+    {
+      // while(not empty())
+        // pop_front();
+      node* n = hd;
+      while(n != nullptr){
+        node* nn = n->next;
+        delete n;
+        n = nn;
+      }
+    }
+    }
+  private:
+    node* hd = nullptr;
+    node* tl = nullptr;
+}
+
+Doubly-Linked list
+------------------
+
+Diagram of a doubly-linked node:
+-------------------------
+|   <-   |  7   |  ->   |
+-------------------------
+   prev   value   next

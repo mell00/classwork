@@ -121,7 +121,8 @@ v[i] <= 1000 (start addr.) + 4 (size of int) * i, which has complexity of O(1)
 
 Linked List
 -----------
--a sequence of *nodes*
+-a sequence of *nodes* linked by their next pointers
+- no need to shuffle nodes when deleting
 
 Diagram of a node:
 ----------------
@@ -138,6 +139,7 @@ Diagram of a node:
   -inserting and deleting nodes requires no shifting (takes constant amount of time)
   -however, indexing has complexity of O(n) because one node refers to the next
   -starts with head node, and ends with tail node
+  -tail node not required but will speed list scanning up
 
   List O()
   ---------------------------
@@ -154,13 +156,27 @@ Diagram of a node:
 
   * lists are suited for these operations, the rest not so much
 
-  insert
+insert(A)
   ------
   -how to insert a new node between node A and node B:
     (1) create a new node n // O(1)
     (2) point n next to B // O(1)
     (3) point A next to n // O(1)
-  -special cases:
-    -inserting a new head
-    -insert a new tail
-    -insert new head and tail
+    - note: can't go backwards to A
+    - A is the parameter and B is the output
+-special cases:
+  -inserting a new head (insert(a==nullptr))
+    (1) create a new node n // O(1)
+    (2) point n's next to existing head B // O(1)
+    (3) point "head" to n // O(1)
+
+  -insert a new tail (insert(a==tail))
+    (1) create a new node n // O(1)
+    (2) point n's next to nullptr (A's next)
+    (3) point A's next to n
+
+  -insert new head and tail
+    (1) create a new node n // O(1)
+    (2) point n's next to nullptr (head)
+    (3) point "head" next to n
+    (4) point "tail" to n
