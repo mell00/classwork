@@ -1,0 +1,210 @@
+Doubly-Linked Lists
+-------------------
+
+Diagram of a doubly-linked node:
+-------------------------
+|   <-   |  7   |  ->   |
+-------------------------
+   prev   value   next
+
+struct node
+{
+  int value;
+  node* next;
+  node* prev;
+};
+
+Insert(a)
+(1) Create a new node n
+(2) point n's next to b's previous (a's next)
+(3) point n's previous to a's next
+(4) point b's previous to n
+(5) point a's next to n
+
+Insert(a==nullptr)
+(1) create a new node n
+(2) point n's next to b (head)
+(3) point n's previous to nullptr (a)
+(4) point b's previous to n
+(5) (n/a)
+(6) point head to n
+
+Insert(a==tail)
+(1) Create a new node n
+(2) point n's next to nullptr (a's next)
+(3) point n's previous to a
+(4) (n/a)
+(5) point a's next to n
+(6) point tail to n
+
+Insert(a==nullptr and empty)
+(1) Create a new node n
+(2) Point n's next to nullptr (head)
+(3) point n's previous to nullptr (a)
+(4) (n/a)
+(5) (n/a)
+(6) point both head and tail to n
+
+Erase(n)
+(1) point (n's prev/a)'s next to (n's next/b)
+(2) point (n's next/b)'s prev to (n's prev/a)
+(3) delete n
+
+Erase(n==head)
+(1) (n/a)
+(2) point (n's next/b)'s prev to nullptr (n's prev)
+(3) point head to (n's next/b)
+(4) delete n
+
+Erase(n==tail)
+(1) point (n's prev/a)'s next to nullptr (n's next
+(2) (n/a)
+(3) point tail to (n's previous/a)
+(4) delete n
+
+Erase(n==head and n==tail)
+(1) (n/a)
+(2) (n/a)
+(3) point head and tail to nullptr
+(4) delete n
+
+Creating Nodes
+--------------
+In-class example:
+  node* n = new node;
+  n->value = ...;
+  n->next = ...;
+
+Assignment #2:
+  node* n = new node{____,____,____}; //value, next, prev
+
+  -Functions outside dlist:
+    dlist reverse(dlist& l)
+    {
+      node* n = l.head(); //Incorrect!
+      dlist::node* n = l.head(); //correctly refers to the node that lives inside the dlist class
+    }
+
+Variations on a theme by List
+-----------------------------
+-sentinel node: a "pretend" node that exists before the head (after the tail) that exists to simplify the code
+  -does not count in list size, nor change big-O complexity
+  -takes up more memory
+  -circular list: a list where the tail points back to the head
+    void print(node* n)
+    {
+      if(n==nullptr)
+        return; //empty
+      node* i = n;
+      do {
+        cout << i->value << endl;
+        i = i->next;
+      } while(i != n);
+    }
+-recursive list (list that calls itself)
+  -in one of two states:
+    -empty (represented by a nullptr)
+    -non-empty, consisting of a value and another list, the rest of the list
+  struct rlist
+  {
+    int value;
+    rlist* rest;
+  }
+
+  void print(rlist* l)
+  {
+    if(l == nullptr)
+      return; //empty
+    else{
+      cout << l->value << endl;
+      print(l->rest); //this is a recursive call, a function that calls itself
+    }
+  }
+
+  int sum(rlist* l)
+  {
+    if(l == nullptr)
+      return 0;
+    else
+      return l->value + sum(l->rest); //the recursive call
+  }
+-cons list: like single linked list, but one or both "halfs"
+            of a cell (node) can be either a value or a pointer
+  -the left half is called a car, the right half is a cdr
+
+  struct call
+  {
+    bool car_is_v;
+    int car_v;
+    cell* car_p;
+
+    bool cdr_is_v;
+    int cdr_v;
+    cell* cdr_p;
+  };
+
+  void print(cell* l)
+  {
+    if(l==nullptr)
+      return;
+    else{
+      if(l->car_is_v)
+        cout << l->car_v;
+      else
+        print(l->car_p);
+      if(l->cdr_is_v)
+        cout << l->cdr_v;
+      else
+        print(l-cdr_p)
+    }
+  }
+
+  int sum(cell* l)
+  {
+    if(l == nullptr)
+      return 0;
+    else{
+      int car_sum = l->car_is_v ?
+                    l -> car_v  :
+                    sum(l->car_p);
+      int cdr_sum = l->cdr_is_v ?
+                    l -> cdr_v  :
+                    sum(l->cdr_p);
+      return car_sum + cdr_sum;
+    }
+  }
+
+  -stacks: similar to a list, but can only manipulate the item at the top of the stack (last in, first out)
+    -push(x) adds item to top of stack
+    -pop() removes top item in stack
+    -empty() returns bool value of whether or not stack is empty
+    -size() returns number of elems
+    -top()/peak() returns top value in stack (but does not modify it)
+    -full() returns bool value of whether or not array is full
+
+    -stack errors
+      -stack underflow: caused by popping or peaking element when the stack is empty
+      -stack overflow: caused by pushing element when stack is full (array-based stacks)
+
+    -stack applications
+      -good for tasks that have subtasks
+        -after a subtask is finished, you want to resume rest of the parent task right where you left off
+          -ex: function calls
+
+          void g()
+          {
+            ....
+          };
+
+          int main() //this is the main stack
+          {
+            ....
+            f();
+            ....
+          }
+          void f()
+          {
+           ....
+           g()
+           ----
+          }
