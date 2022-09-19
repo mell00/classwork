@@ -1,0 +1,246 @@
+- ex: Postfix Calculator
+------------------------
+  -input: 1 2 3 * +
+  (1) if the input looks like a number, push it
+  (2) if the input looks like an operation, pop two values, perform
+  the operation, then push the result
+    - 2 * 3 = 6, and 1 + 6 = 7
+  #include <iostream>
+  #include <stack>
+  #include <string>
+  #include <vector>
+  using namespace std;
+
+  int main()
+  {
+    stack<int> st;
+    while(true) {
+      cout << "> ";
+      string line;
+      getline(cin, line);
+
+      vector<string> words = split(line);
+      for (string w : words) {
+        if(isdigit(w[0])) {
+          //1. looks like a number, push
+          st.push(stoi(w));
+        }
+        else if(w == "+" or w == )
+
+      }
+    }
+  }
+
+List-Based Stack
+----------------
+stack             list
+-----            ------
+push(x) -------> push_front(x)
+pop(x) --------> pop_front(x)
+empty() -------> empty()
+
+ex: class stack{
+      public:
+        struct node
+        {
+          int value;
+          node* next;
+        }
+        void push(int x);
+        int pop();
+        bool empty();
+      private:
+        node* head = nullptr;
+        // no need for a tail pointer because stacks operate at the front
+    };
+
+    void stack::push(int x)
+    {
+      node* n = new node;
+      n->value = x;
+      n->next = head;
+      head = n;
+    }
+
+    int stack::pop()
+    {
+      // check for stack underflow
+      node* n = head;
+      head = n->next;
+      /* do not do the following:
+      delete n;
+      return n->value;
+      there is no guarantee that the value of n is the one desired */
+      delete n;
+      return x;
+    }
+    bool stack::empty()
+    {
+      return head == nullptr;
+    }
+
+    Array-Based stack
+    -----------------
+    ex: class stack{
+          public:
+            void push(int x);
+            int pop();
+            bool empty();
+          private:
+            int* st;
+            int cap,sz;
+        };
+
+        void stack::push(int x)
+        {
+          if (sz == cap) // stack overflow
+          st[sz] = x;
+          ++sz;
+        }
+
+        int stack::pop()
+        {
+          if(sz == 0) // stack underflow
+          --sz;
+          return st[sz];
+        }
+        bool stack::empty()
+        {
+          return sz == 0;
+        }
+        bool stack::full()
+        {
+          return sz == cap;
+        }
+Queues (First In First Out)
+------
+  -enqueue(x) adds item to back of queue
+  -dequeue() removes first item in queue (all the way at the front)
+  -empty() determines if queue is empty
+  -size() returns the number of values in the queue
+  -full() determines if the queue is full (if array_based)
+  -front() "peeks" at the front value of the queue without removing it
+  -queue errors:
+      -queue underflow: dequeue()/front() when empty()
+      -queue overflow: enqueue() while full() (when array_based)
+
+List-Based Queue
+----------------
+queue             list
+-----            ------
+enqueue(x) ----> push_back(x)
+dequeue(x) ----> pop_front(x)
+empty() -------> empty()
+
+ex: class queue
+    {
+      public:
+        struct node
+        {
+          int value;
+          node* next;
+        };
+
+        bool empty();
+        void enqueue(int x);
+        int dequeue();
+      private:
+        node* head = nullptr;
+        code* tail = nullptr;
+    };
+    bool queue::empty()
+    {
+      return head == nullptr and tail == nullptr;
+    }
+    void queue::enqueue(int x)
+    {
+      if (empty()) {
+        head = tail = new node{x,nullptr}
+      }
+      else { // queue already has a head
+        node* n = new node;
+        n->value = x;
+        n->next = nullptr;
+        tail->next = n;
+        tail = n;
+      }
+    }
+    int queue::dequeue()
+    {
+      if(empty())
+        queue underflow!
+      else if(tail == head){
+        int x = head->value;
+        delete head;
+        head = tail = nullptr;
+        return x;
+      }
+      else{
+        node* n = head;
+        head = head->next;
+        int x = n->value;
+        delete n;
+        return x;
+      }
+    }
+
+Array-Based Queue
+----------------
+-treat the array as a circular buffer
+queue             list
+-----            ------
+enqueue(x) ----> push_back(x)
+dequeue(x) ----> pop_front(x)
+empty() -------> empty()
+
+ex: class queue
+    {
+      public:
+        struct node
+            {
+              int value;
+              node* next;
+            };
+
+            bool empty();
+            void enqueue(int x);
+            int dequeue();
+        private:
+          node* head = nullptr;
+          code* tail = nullptr;
+        };
+      bool queue::empty()
+        {
+          return head == nullptr and tail == nullptr;
+        }
+      void queue::enqueue(int x)
+        {
+          if (empty()) {
+            head = tail = new node{x,nullptr}
+          }
+          else { // queue already has a head
+            node* n = new node;
+            n->value = x;
+            n->next = nullptr;
+            tail->next = n;
+            tail = n;
+          }
+        }
+      int queue::dequeue()
+        {
+          if(empty())
+            queue underflow!
+          else if(tail == head){
+            int x = head->value;
+            delete head;
+            head = tail = nullptr;
+            return x;
+          }
+          else{
+            node* n = head;
+            head = head->next;
+            int x = n->value;
+            delete n;
+            return x;
+          }
+        }

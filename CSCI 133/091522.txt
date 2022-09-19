@@ -174,9 +174,9 @@ Variations on a theme by List
     }
   }
 
-  -stacks: similar to a list, but can only manipulate the item at the top of the stack (last in, first out)
+  -stacks (Last In First Out): similar to a list, but can only manipulate the item at the top of the stack (last in, first out)
     -push(x) adds item to top of stack
-    -pop() removes top item in stack
+    -pop() removes top item in stack (so basically push(x) in reverse)
     -empty() returns bool value of whether or not stack is empty
     -size() returns number of elems
     -top()/peak() returns top value in stack (but does not modify it)
@@ -200,11 +200,46 @@ Variations on a theme by List
           {
             ....
             f();
-            ....
+            .... // f must be done
           }
           void f()
           {
            ....
            g()
-           ----
+           .... // g must be done
+          }
+
+      function call stack:
+          |      |
+          |      |
+          |  g   |
+          |  f   |
+          | main |
+          ________
+        - ex: Postfix Calculator
+        ------------------------
+          -input: 1 2 3 * +
+          (1) if the input looks like a number, push it
+          (2) if the input looks like an operation, pop two values, perform
+          the operation, then push the result
+            - 2 * 3 = 6, and 1 + 6 = 7
+          #include <iostream>
+          #include <stack>
+          #include <string>
+          #include <vector>
+          using namespace std;
+
+          int main()
+          {
+            stack<int> st;
+            while(true) {
+              cout << "> ";
+              string line;
+              getline(cin, line);
+
+              vector<string> words = split(line);
+              for (string w : words) {
+
+              }
+            }
           }
