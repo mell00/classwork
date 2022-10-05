@@ -184,6 +184,7 @@ ex: {7,3,5,2,9} --"sort"--> {1,2,3,4} //incorrectly sorted
 -properties of sorting algorithms
   -runtime: O(n^2) vs O(nlogn)
   -memory usage: O(1) "in-place algorithm" vs O(n) "not in-place algorithm"
+    -"in-place algorithm" does not need extra memory (copies) for data
   -adaptive: runs faster for partially-sorted input (best-case runtime is O(n))
   -stable: can be used in a multi-stage sort, preserving existing order if possible
 

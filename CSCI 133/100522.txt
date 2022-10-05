@@ -1,0 +1,134 @@
+O(n^2) Sorting algorithms
+-------------------------
+-selection sort:
+  -swaps the first element with the smallest element, locking in that first element
+  -swaps second element with the smallest element in rest of vector, locking in that second element
+  -continues until all elements except for element n - 1 are locked in
+
+  void sel_sort(vector <int>& v) //complexity of O(2), non-adaptive (no way to end it early),
+  {
+    for(int i=0; i<v.size()-1; ++i)
+    {
+      //find smallest in v[i]....v[n-1]
+      int smallest = i; //index of smallest value
+      for(int j=i+1; j<v.size(); ++j)
+        if(v[j] < v[smallest])
+          smallest = j;
+      std::swap(v[i],v[smallest]);
+    }
+
+  }
+
+  recursive version:
+  void sd_sort(vector<int>& v, int i = 0)
+  {
+    if (i == v.size - 1)
+      return;
+    else {
+      int smallest i;
+      for(int j = i+1; j<v.size(); ++j
+        if(v[j] < v[smallest]))
+          smallest = j;
+      std::swap(v[i],v[smallest]);
+      sel_sort(v,i+1)
+  }
+
+  Double-Selection Sort
+  -small swaps with front element, largest elements swaps with last element
+  -check: did swap move thing I need to replsce
+
+  Bubble Sort
+  -compare pairs of elements
+  -does compare and swap
+    -if(v[i] > v[i+1])
+    swap(v[i],v[x+1])
+  -code:
+    void bub_sort(vector<int>& v) //complexity of O(n^2)
+    {
+      for (int i = 0; i < v.size()-1; ++i)
+        //compare and swap v[0] ... v[size - i - 1]
+          for int j = 0; j < v.size - i - 1; ++j
+            if(v[j] > v[j+1])
+    }
+
+      -keeping track of swaps:
+      void bub_sort(vector<int> &v)
+      {
+        for int i = 0; i < v.size()-1; ++i){
+          bool did_swap = true;
+          for(int j = 0; j<v.size()-i-1;++j)
+            if(v[j] > v[j+1]){
+              std::swap(v[j],v[j+1]);
+              did_swap = true;
+            }
+          if(did_swap == false) return;
+        }
+      }
+
+      -recursive form:
+      void bub_sort(vector<int> &v)
+      {
+        for(int j = 0; j < v.size() - i - 1; ++j)
+          if(v[j] > v[j+1])
+            std::swap(v[j],v[j+1]);
+          bub_sort(v,i+1);
+      }
+    Insertion sort: take a number, compare it to the previous element, if it
+      is less than previous element then insert before previous element. repeat until
+      condition is false
+        -code:
+        void ins_sort(vector<int>& v) // best case: O(n), worst case: O(n^2); stable
+        {
+          for(int i = 1; i < v.size(); ++i)
+            // swap v[i] down into v[i-1]....v[0]
+            for(int j = i; j>0; --j)
+              if(v[j] < v[j-1])
+                std::swap(v[j],v[j-1])
+              else
+                break;
+        }
+        -recursive form:
+        void ins_sort(vector<int>& v) // best case: O(n), worst case: O(n^2); stable
+        {
+          for(int i = 1; i == v.size(); i=i+1)
+            // swap v[i] down into v[i-1]....v[0]
+            for(int j = i; j>0; --j)
+              if(v[j] < v[j-1])
+                std::swap(v[j],v[j-1])
+              else
+                break;
+        }
+Gnome Sort
+----------
+1. the gnome starts at position 0
+2. if the gnome is at position 0, move right
+3. if the gnome is at position n, stop, we are Done
+4. otherwise, if v[gnome] < v[gnome-1], swap and move left
+5. if v[gnome] >= v[gnome-1], move right
+-code:
+  void gnome_sort(vector<int>& v) //O(n^2) complexity because the gnome keeps moving right
+  {
+    int g = 0;
+    while(g != v.size()){
+      if (g==0)
+        ++g; //move right
+      else if(v[g] < v[g-1]){
+        std::swap(v[g],v[g-1]);
+        --g //left
+      }
+      else
+        ++g; //right
+    }
+  }
+
+  Sub-O(n^2) sorting
+  ------------------
+  -see diagram
+  -decision tree of complexity O(h), where h = O(log w) and w = n!
+  n! = (n) x (n-1) x ... x (2) x (1)
+  n^n = (n) x (n) x ... x (n) x (n)
+  n! <= n^n
+  n! = O(n^n)
+  n^n = O(n!)
+
+  so h = O(n log n)
