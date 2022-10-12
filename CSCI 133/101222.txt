@@ -1,0 +1,125 @@
+mergesort
+---------
+The merge operation:
+                         sz
+in |-1|2|7|10|0|3|4|6|11|  |
+sz = 9                    sz
+out |-1|0|2|3|4|6|7|10|11|  |
+
+void merge(int* in, int sz, int* out)
+{
+  int i = 0, j = sz/2, k = 0;
+  while(i < sz/2 and j < sz){ //k is always incrementing, and program selects between i and j to increment each time
+    if(in[i] < in[j]){
+      out[k] = in[i];
+      ++i;
+    }
+    else{ // in[i] >= in[j]
+      out[k] = in[j];
+      ++j;
+    }
+    ++k;
+  } //here, i == sz/2 or j == sz
+  //from here, one of the following while loops will run:
+  while(i<sz/2){ // copy rest of elements from i's half of array
+    out[k] = in[i];
+    ++i;
+    ++k;
+  }
+  while(j<sz){ // copy rest of elements from j's half of array
+    out[k] = in[j];
+    ++j;
+    ++k;
+  }
+}
+
+void mergesort(int* in, int sz, int* out)
+{
+  if(sz == 0)
+    return;
+  else if(sz == 1)
+    out[0] = in[0];
+  else{
+    // sz >= 2
+    int mid = sz/2;
+    mergesort(in,mid,out); //only sorts left half of array
+    mergesort(in + mid, sz - mid, out + mid); //only sorts right half of array
+    for (int i = 0; i < sz; ++i)
+      in[i] = out[i]; // sends out elements to in
+    merge(in,sz,out); // merges in elements and sends to out
+  }
+}
+
+In-place merge
+--------------
+-shifts numbers in same array
+-complexity: O(n^2) work, O(n^2logn) overall
+
+Assignment #3: Bitonic Mergesort
+--------------------------------
+- a bitonically sorted sequence is one where the left-"half" is ascending order
+and right-"half" is descending order
+in |-1|2|7|10|11|6|4|3|0|
+    i ->            <- j
+    --------->---------->
+    ascending descending
+
+              k
+out |-1|0|2|3| | | | | |
+    ------------------->
+        ascending
+
+- just one big loop
+- if true then out is ascending, then false is descending
+
+Quicksort
+---------
+-in-house partition operation; small things to left of pivot,
+bigger things to right of pivot in non specific order
+data |7|11|10|4|420|42|69|12|
+    pivot value: 420
+data |7|11|10|4|12|42|69|420|
+     <-----------------><--->
+            < 420       >=420
+
+data |7|11|10|4|420|42|69|12|
+    pivot value: 12
+data |7|11|10|4|12|42|69|420|
+     <----------->---------->
+          < 12      >= 12
+     |7|11|10|4|12|   |42|69|420| pivots: 7 and 69
+     |4|11|10|7|12|   |42|69|420|
+     |4|  |11|10|7|12|   |42|69|  |420| pivots: 11
+     |4| |7| |10|11|12|
+-in-place partition: complexity of O(n)
+
+int partition(int* data, int sz)
+{
+  iint i = -1, j = sz;
+  int p = ...; //pivot value
+  while (true){
+    do ++i; while(data[i] < p); //data[i] >= p;
+    do --j, while(data[j] > p); //data[1] <= p;
+    if(j >= i) return j+1;
+    std::swap(data[i],data[j]);
+  }
+}
+
+void quicksort(int* data,int sz)
+{
+  if(sz==0 or sz==1)
+    return;
+  else{
+    int mid = partition(data,sz);
+  }
+    if (mid==sz)
+      mid = sz - 1;
+    quicksort(data,mid) // data[0]...data[mid-1]
+    quicksort(data+mid, sz-mid) // data[mid]...data[sz-1]
+}
+
+-bad pivots:
+  -first/last elements (leads to O(n^2) if pre-sorted and selected)
+-good pivots:
+  -random elements
+  -median of 3 random elements

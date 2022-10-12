@@ -2,24 +2,24 @@ Linked lists
 ------------
    insert(A)
      ------
-     -how to insert a new node between node A and node B:
+     -how to insert a new node between node A and node B: prior->next = new node{value, prior->next}
        (1) create a new node n // O(1)
        (2) point n next to B // O(1)
        (3) point A next to n // O(1)
        - note: can't go backwards to A
        - A is the parameter and B is the output
    -special cases:
-     -inserting a new head (insert(A==nullptr))
+     -inserting a new head (insert(A==nullptr)) hd = new node{value, _head};
        (1) create a new node n // O(1)
        (2) point n's next to existing head B // O(1)
        (3) point "head" to n // O(1)
 
-     -insert a new tail (insert(A==tail))
+     -insert a new tail (insert(A==tail))  tl = prior->next;
        (1) create a new node n // O(1)
        (2) point n's next to nullptr (A's next)
        (3) point A's next to n
 
-     -insert 1st node (insert(A==nullptr))
+     -insert 1st node (insert(A==nullptr)) hd = tl = new node{value, nullptr};
        (1) create a new node n // O(1)
        (2) point n's next to nullptr (head)
        (3) point "head" next to n

@@ -1,6 +1,6 @@
 Doubly-Linked Lists
 -------------------
-
+node* n = new node{____,____,____}; //value, next, prev
 Diagram of a doubly-linked node:
 -------------------------
 |   <-   |  7   |  ->   |
@@ -14,7 +14,7 @@ struct node
   node* prev;
 };
 
-Insert(a)
+Insert(a) prior->next = new node{}
 (1) Create a new node n
 (2) point n's next to b's previous (a's next)
 (3) point n's previous to a's next
