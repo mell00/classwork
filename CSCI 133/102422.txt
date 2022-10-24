@@ -1,0 +1,153 @@
+Binary (Search) trees
+---------------------
+-a binary search tree has the search order property
+  -at any node n, all of n's left descendants must be < n and all n's
+  right descendants must be > n
+    -by this definition, duplicate values are not allowed
+    -as you go down a tree, the range of values shrinks
+  -suppose target = value that exists in the tree. Then you traverse down the tree by
+  comparing the tree values with the target
+  -suppose target DNE. The you traverse down the tree until you fall off the tree
+  -height of tree == runtime of tree
+-height of node with no children = 1
+-height of node = height of tallest child + 1
+
+struct node
+{
+  int value; // can be floats. just must be comparable
+  node* left;
+  node* right;
+  //node* parent; points up to the parent node of the current node; root would be nullptr
+  ///int height;
+}
+
+how to check if a binear search tree is valid or not:
+
+bool is_bst(node* n, int l, int h)
+{
+  if(n==nullptr) return true;
+  else{
+    if(n->value <= l or n->value >=h)
+      return false;
+    return is_bst(n->left, l, n->value) and
+           is_bst(n->right, n->value, h);
+  }
+}
+
+to call the above function on the root....
+
+bool is_bst(node* root)
+{
+  return is_bst(root, INT_MIN, INT_MAX)
+}
+
+BST Operations
+--------------
+-node* find(node* root, int x);
+  -returns a pointer to the node containing x, or nullptr
+  (1) start at the root
+  (2) compare x to the node's value
+    - if x = node's value, stop. Found!
+    - if x < node's value, go left
+    - if x > node's value, go right
+  (3) if the node is ever nullptr, stop. Is not found!
+   if x doesn't exist
+  - complexity of O(height)
+-node* insert(node* root, int x);
+  -returns a "modified" tree with x added
+  (1) if tree is empty, return a new node whose value is x
+  (2) find x (O(height))
+  (3) if x already exists, return original tree
+  (4) otherwise, add a new node whose value is x at the
+  point where find ends
+  (5) return root
+  - complexity of O(height)
+-node* erase(node* root, int x);
+  -returns a "modfied" tree that does not contain x
+  (1) find x (O(height))
+  (2) if x does not exist, return original tree
+  (3) remove the node containing x
+    - case 0: x has no children (60,35,92) - remove node.
+    - case 1: x has 1 child (15,65) - replace node with its child.
+    - case 2; x has two children (57,81) -
+        (a) find predecessor or successor of x
+        (b) replace x with predecessor or successor
+        (c) erase original predecessor or successor (case 0 or 1)
+  -complexity of O(h)
+-successor (O(h))
+  -go right once, then go left as far as possible
+-predecessor
+  -go left once, then go right as far as possible
+
+-want to try to balance your tree? randomize your values
+
+Find:
+node* find(node* root, int x)
+{
+  node* n = root;
+  while(n!=nullptr){
+    if(x == n->value) return n; // Found!
+    else if(x < n->value) n = n->left;
+    else if(x > n->value) n = n->right;
+  }
+  return nullptr; //Not found!
+}
+
+OR
+
+node* find(node* n, int x)
+{
+  if(n == nullptr) return nullptr;
+  else if(x == n->value) return n; //Found!
+  else if(x < n->value) return find(n->left,x);
+  else if(x > n->value) return find(n->right,x);
+
+}
+// this is linearly recursive because we choose one side or the other^^
+// also tail-recursive
+
+Largest Value in a Tree:
+node* max(node* n)
+{
+  while(n->right != nullptr)
+    n=n->right;
+  return n;
+}
+
+Smallest Value in a Tree:
+node* min(node* n)
+{
+  while(n->left != nullptr)
+    n=n->left;
+  return n;
+}
+
+Insert (needs a modified Find that doesn't traverse off of the tree)
+
+node* parent(node* root, int x)
+{
+  node* n = root;
+  node* p = nullptr; // above n; tags behind n at all times
+  while(n != nullptr){
+    if(x == n->value) return p;
+    p = n;
+    if(x < n->value) n = n->left;
+    else             n = n->right;
+  }
+  return p;
+} // complexity of O(h)
+
+node* insert(node* root, int x)
+{
+  if(root == nullptr)
+    return new node{x,nullptr,nullptr}; //{value, left, right}
+  else {
+    node* p = parent(root,x);
+    if(x < p->value and p->left != nullptr)
+      return root; //x already exists on the left
+    if(x > p->value and p->right != nullptr)
+      return root; //x already exists on the right
+    (x < p->value ? p->left:p->right) = new node{x,nullptr,nullptr};
+    return root;
+  }
+}
