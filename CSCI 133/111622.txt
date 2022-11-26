@@ -1,0 +1,145 @@
+Hash functions
+--------------
+a["Hello"] = ...;
+done with
+a[hash("Hello")] = ...;
+  0... m-1
+  (m = array size)
+
+-determinism: if string_1 = string_2 then hash(string_1) = hash(string_2)
+-uniform distribution: all of the m possible outputs should have roughly equal
+probability
+  -histogram of occurrences slope should be flat or close to flat
+-avalanche effect: small changes in input should produce large changes in output
+  - if string_1 ~ string_2 ("is similar")
+    then hash(string_1) !~ hash(string_2) ("not similar")
+-low probability of collision (when two different strings hash to the same spot)
+  - if we have hashed n different strings, then P(collision) is approx n/m
+
+Base-256 Representation
+-----------------------
+Base-10: "2357" = 2(10^3)+3(10^2)+5(10^1)+7(10^0)
+Base 256: "Horn" = ('H')(256^3)+('o')(256^2)+('r')(256^1)+('n')(256^0)
+int base256(string s)
+{
+  int k = 0;
+  for(char c : s)
+    k = 256*k + c;
+  return k;
+}
+  -doesn't have a good avalanche effoect; integer overflow
+
+Remainder Hashing
+-----------------
+- if k = base256 then hash(s) = k % m
+-best: m is prime
+- ok: m is "nearly" prime (2^i - 1)
+-bad: 2^i (power at 2)
+- modulo is distributive
+  (a+b) % m -> ((a % m) + (b % m)) % m
+  (1257 + 616) % 10 = 1873 % 10 = 3
+
+int rem_hash(string s)
+{
+  int h = 0;
+  for (char c : s)
+    h = (256*h + c) % m;
+  return h; <- apply mixing function
+}
+
+ex: Compute rem_hash("Hash") with m = 10
+
+('H')(256^3)+('a')(256^2)+('s')(256^1)+('h')(256^0) % 10
+72(256^3)+(97)(256^2)+(15)(256^1)+(104)(256^0) % 10
+2(256^3) + 7(256^2) + 5(256^1) + 4 % 10
+(12 + 42 + 30 + 4) % 10 = 8
+
+Multiplicative Hashing
+----------------------
+- if k = base256(s)
+  then hash(s) = floor(m * frac(k*A)) where A is a floating pt constant
+  = A = (sqrt(s) - 1)/2
+  -frac(x): fractional part of x
+    frac(0.0) = 0;
+    frac(1.0) = 0.0;
+    frac(123.456) = 0.456
+    0 <= frac(x) < 1
+  - in C++;
+    #include <cmath>
+      frac(x) -> fmod(x,1)
+      frac(21.572 + 58.93) -> frac(21.572) + frac(58.93) = frac(0.572 + 0.93) = 1.502
+      frac(0.572 + 0.93) = 0.502
+    to floor function, floar(x)
+    int mult_hash (string s)
+    {
+      double k = 0.0;
+      for(char c : s)
+        k = fmod(A(256 * k + c),1) * m;
+      return (m*k);
+    }
+
+  Assignment 5
+  ------------
+  Testing hash function uniformity
+  - take five good and bag hash functions (string length, first char, checksum,
+  remainder, and multiplicative)
+    -'No' for first three, 'yes (kinda)' for remainder and multiplicative
+  -loop that scans file after each hash, incrementing entries that make up
+  histogram
+  -print histogram VERTICALLY for extra credit
+
+  Hash Tables
+  -----------
+
+  int hash(string s);
+  vector<hash_entry*> tbl(m,nullptr); //<- uses nullptrs to indicate that not all cells will be used
+    tbl[hash(s)] = ...;
+
+Collision-Handling Strategies
+-----------------------------
+-chaining: each entry in table is a linked list (storing multiple things in same spot within list)
+ex: insert these values into a hash table of size m = 11, using remainder hashing with
+chaining: 7, 56, 13, 92, 71, 24, 34, 100
+----------------------------------------
+% 11      7, 1,  2,  4,  5,  2,  1,  1
+
+0|
+1|100,34,56
+2|24,13
+3|
+4|92
+5|71
+6|
+7|7
+8|
+9|
+10|
+
+  load factor = alpha = n values/size m = 8/11 = approx 0.72
+    -note: load factor can be greater than 1.0, but will slow the program
+-open-addressing: if the spot we want is full, check somewhere else
+  -probe strategy: what order are you searching for empty spots in the hash table
+    -linear probing
+      probe(i) = (hash(s) + i) % m
+      -if i is full, then increment i and keep going
+      -if you reach bottom of table, then wrap around (% m)
+    -quadratic probing
+      probe(i) = (hash(s) + ai + bi^2) % m (where a and b are consts)
+    -double hashing
+      probe(i) = (hash_1(s) + i*hash_2(s)) % m
+ex: insert these values into a hash table of size m = 11, using remainder hashing with
+linear probing: 7, 56, 13, 92, 71, 24, 34, 100
+----------------------------------------
+% 11      7, 1,  2,  4,  5,  2,  1,  1
+
+0|
+1|56
+2|13
+3|24
+4|92
+5|71
+6|34
+7|7
+8|100
+9|
+10|

@@ -1,0 +1,176 @@
+Module 5: Hashing
+-----------------
+Problem: given a student's name (string) we want to look up their GPA (float),
+"quickly"
+
+struct student
+{
+  string name;
+  float gpa;
+  :
+  :
+};
+
+vector<student> all_stud; //size = n
+
+Attempt #1 (loop): float get_gpa(string name){ // O(n), which is kind of slow for university with thousands of students
+  for (student s : all_stud)
+    if (s.name == name)
+      return s.gpa;
+  return -1.0; //student name does not exist
+}
+
+Attempt #2 (binary search tree): struct node
+{
+  string name;
+  float gpa;
+
+  node* left;
+  node* right;
+  :
+};
+
+node* all_stud = ...;
+float get_gpa(string name) \\ O(logn), better than Attempt #1 for larger student pop.
+{
+  node* n = all_stud;
+  while (n != nullptr){
+    if(n->name == name)
+      return n->gpa;
+    else if (name < n->name)
+      n=n->left;
+    else
+      n=n->right;
+  }
+  return -1.0; //Not found
+}
+
+-goal: time to find students does not depend on quantity of students at university
+
+Arrays and Hash Functions
+-------------------------
+a[i] //O(1) (time taken doesn't depend on position i or array size m)
+-can't use strings as position i (ie. a["Jane"])
+  -workaround: "Jane" ---hash---> h, then a[h] //O(1)
+    -hash complexity O(s) depends on the string length s, not the number of strings
+      -but the number of strings (infinite) is always greater than m!
+      -collision: string_1 != string_2, but hash(string_1) == hash(string_2)
+-hash function properties (DUAL):
+  -Determinism (REQUIRED): if string_1 == string_2, then
+   hash(string_1) == hash(string_2)
+  -Uniform (statistical) distribution over 0...m-1
+    -all outputs in 0...m-1 should be equally likely
+    -helps make collisions unlikely
+  -Avalanche effect: small changes in input should produce large changes
+     in output
+  -Low probability of collision: for n hashes, probability of collisions
+     should be n/m
+-potential hash functions:
+  Attempt #1: string length
+    int hash(string s) //assume strings are individual English words
+    {
+      return s.length() % m; //mod ensures o<n<m;
+    }
+    -deterministic? yes
+    -uniform distribution? no (few words are more than 20 letters long)
+    -avalanche effect? no
+      hash("cat") == hash("!&@") (3 and 3)
+    -low prob of collision? no (pretty high probability of collision)
+    Attempt #2: first char
+      int hash(string s) //assume strings are individual English words
+      {
+        return s[0] % m; //mod ensures o<n<m;
+      }
+      -deterministic? yes
+      -uniform disribution: no, avalanche effect: no, as hash("my") == hash("microscope")
+      -low probability of collision? No (high probability of collision)
+    Attempt #3: checksum (sum of chars)
+      int hash(string s)
+      {
+        int h = 0;
+        for (char c : s)
+          h += int(c);
+        return h % m;
+      }
+    -deterministic? yes;
+    -uniform distribution of checksum: no;
+      -A-Z : 65-90
+      -a-z = 97-122
+      -shortest English word(s):
+        "a"; hash("a") = 97 (lower range of v)
+      -longest English wor:
+        45 chars long = 45*122 = 5490 (upper range of v)
+    - Avalanche effecthash (no, but better); hash("bat") = x and hash("cat") = x+1
+    - low prob. of collision: no (moderate prob of collision)
+  -incorporates all characters
+  -incorporates information about char positions
+    (s[0])a_0 + .... + (s[1])a_1 + (s[n-1])a_(n-1))
+      - a_n are all constants
+      -this is still deterministic
+      -char is 1 byte, which is typically 8 bits (can vary by computer)
+        -0...255
+      - a_(n-1) = 256^0, a_1 = 256^1, ..., a_0 = 256^(n-1)
+      -essentially taking a string and translating it into base 256
+      -Base 256 Representation
+        -int base256(string s){
+          int h = 0;
+          int p = s.length()-1;
+          for(char c : s){
+            h+= pow(256,p) * int(c);
+            --p;
+          }
+          return h;
+          }
+        - pow function is slow, and works only on floats and doubles
+        -int base256(string s){
+          int h = 0;
+          int p = 1; // 256^0
+          for(int i = s.length() - 1; i >= 0; --i)
+            h += s[i] * p; // 1 addition per character
+            p *= 256; // 2 multiplications per character
+          return h;
+          }
+          -Horner's Method
+            "horn"
+            ('h')(256^3) + ('o')(256^2) + ('r')(256^1) + ('n')(256^0)
+            --> 256(256(256('h') + 'o') + 'r') + 'n'
+              -1 mutiplication and 1 addition per character
+          -final version:
+            int base256(string s)
+            {
+              int h = 0;
+              for (int i = 0; i < s.length(); ++i)
+                h = 256*h + s[i];
+              return h;
+            }
+      -Remainder Hashing (good hash function)
+        int hash(string s){
+          return base256(s) % m; // m is the "remainder"
+        }
+        -modulo is distributive over addition and multiplication
+          - (a+b) % m --> ((a % m) + (b % m)) % m
+          -ex: (1927 + 538) % 10 = 2465 % 10 = 5
+              --> (7 + 8) % 10 --> 15 % 10 = 5
+          - (a * b) % m --> ((a % m) * (b % m)) % m
+        int hash(string s){
+          int h = 0;
+          for (char c : s)
+            h = (256*h + c) % m;
+          return h;
+        }
+      -ex: Hash the string "push" with m=10
+        p = 112, u = 117, s = 115, h = 104
+        [(112)(256^3) + (117)(256^2) + (115)(256^1) + (104)(256^0)] % 10
+        --> [(2)(256^3 % 10) + (7)(256^2 % 10) + (5)(256^1 % 10) + (4)(256^0 % 10)]
+        256^k % 10 = 6 for k >= 1
+        --> [(2)(6) + (7)(6) + (5)(6) + (4)(1)] % 10
+        --> (12 + 42 + 30 + 4) % 10
+        --> (2 + 2 + 0 + 4) % 10 --> 8
+      -Multiplicative Hashing
+        If
+          k = base256(s)
+        then
+          hash(s) = floor(m * frac(k * A))
+          - A: constant((sqrt(5) - 1)/2)
+          - frac(123.456) = 0.456
+          - floor rounds down (0...m-1)

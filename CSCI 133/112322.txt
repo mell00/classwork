@@ -1,0 +1,166 @@
+Collision Handling
+------------------
+- chaining: each table entry is a linked list
+- open addressing: if the table entry we want is full, check somewhere else
+  - linear probing: checks the next entry in the table
+      probe(i) = hash(s) + i
+  - quadratic probing: scatters the probe locations by running them with a quadratic formula
+      probe(i) = hash(s) + ai + bi^2
+  - double hashing: uses two hash functions, giving strings a unique search pattern
+    and ensuring that no two string have the same pattern
+      probe(i) = hash_1(s) + i*hash_2(s)
+
+ex: Insert these values into a hash table of size n = 9, using linear probing
+    11, 3, 47, 19, 27, 88, 72
+%9  2 , 3, 2,  1,  0,  7,  0
+
+0|27, 72     -> 0|27
+1|19         -> 1|19
+2|11, 47     -> 2|11
+3|3          -> 3|3
+4|           -> 4|47
+5|           -> 5|72
+6|           -> 6|
+7|88         -> 7|88
+8|           -> 8|
+
+2 collisions in data (positions 0 and 2)
+7 collisions in probing
+
+ex: Insert the same values into a similar hash table using double hashing
+
+47: 2 + 0*2 = 2 (collision)
+    2 + 1*2 = 4 (now its good)
+
+72: 0 + 0*8 = 0 (collision)
+    0 + 1*8 = 8 (now its good)
+
+0|27, 72     -> 0|27
+1|19         -> 1|19
+2|11, 47     -> 2|11
+3|3          -> 3|3
+4|47         -> 4|47
+5|           -> 5|
+6|           -> 6|
+7|88         -> 7|88
+8|           -> 8|72
+
+Module 6: Binary Heaps
+----------------------
+-priority queue
+  - like a regular queue, but priority is explicitly defined
+  - three operations:
+    - insert(x,p): insert value x with priority p
+    - extract_max(): remove and return item with the highest priority
+    - max(): returns (but does not remove) item with the highest priority
+  - as ordered_array:
+    - insert --> insert } O(n)
+    - extract_max --> pop_back } O(1)
+    - max --> back } O(1)
+  - as unordered array (vector)
+    class pri_queue {
+      public:
+        void insert(int p); // O(1)
+        int extract_max(); // O(n)
+        int max(); // O(n)
+      private:
+        vector<int> q; //unsorted
+    };
+
+    void pri_queue::insert(int x)
+    {
+      q.push_back(x);
+    }
+
+    int max()
+    {
+      int m = q.at(0);
+      for (int x : q)
+        if (x > m)
+          m = x;
+      return m;
+    }
+- binary heap: a complete binary tree with the heap order property (complete means that
+  there are no holes in the tree)
+  - heap order property: at any node n, n's left and right children are both < n
+  - three operations:
+    - max(): return the root
+      - O(1)
+    - insert(p): add p in the bottom-most row to the left
+      - swap p up until the heap order property (H.O.P.) is restored
+      - known as a "fix-up"
+      - O(logn)
+    - extract_max(): swap the root with the bottom-most value, remove the bottom-most
+      node, and swap the root down until H.O.P. is restored
+      - known as a "fix-down"
+      - O(logn)
+  | |52|50|35|27|48|20|15|19|7| | (top to bottom, left to right)
+   0 1  2  3  4  5  6  7  8  9 10
+   - array-based heap
+    - root is always at index 1
+    - left(i) = 2i
+    - right(i) = 2i + 1
+    - parent(i) = i/2 (integer math always rounds down)
+
+  class bin_heap {
+    public:
+      bin_heap();
+      int max();
+      int extract_max();
+      void insert(int x);
+    private:
+      vector<int> h; //size >= 1
+      void fix_up(int i); // used by insert
+      void fix_down(int i); // used by extract_max
+  };
+
+  bin_heap::bin_heap()
+  {
+    h.push_back(INT_MAX); // in position 0
+  }
+
+  bin_heap::max()
+  {
+    return h[1]; // returns the root
+  }
+
+  void bin_heap::insert(int x)
+  {
+    h.push_back(x);
+    fix_up(h.size()-1);
+  }
+
+  void bin_heap::fix_up(int i) // O(log2n)
+  {
+    while(i > 1 and h[i] > h[i/2])
+      swap(h[i],h[i/2]);
+      i = i/2;
+  }
+
+  int bin_heap::extract_max()
+  {
+    int x = h[1];
+    swap(h[1],h.back());
+    h.pop_back();
+    fix_down(1);
+    return x;
+  }
+
+  void bin_heap::fix_down(int i) // O(log2n)
+  {
+    while(i <= (h.size()-1)/2)
+      // find largest of h[i], h[2i], h[2i+1]
+      int l = i; // index of largest
+      if (h[2*i] > h[l])
+        l = 2*i;
+      if ((2*i + 1 < h.size())&&(h[2*i + 1] > h[l])) // check if right child exists and if its greater than h[l]
+        l = 2*i + 1;
+      if (l == i)
+        return; // parent is bigger than both children, so leave alone
+      swap(h[i],h[l]);
+      i = l; // here, l is either 2*i or 2*i + 1
+  }
+
+- build-heap
+ ex: | |60|37|42|21|11|99|40|1|23|
+ for each array element x, insert(x) // O(n) total, O(n) for insert(x)

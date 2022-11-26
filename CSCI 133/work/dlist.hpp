@@ -21,20 +21,65 @@ class dlist {
         node* prev;
     };
 
-    node* head() const { return _head; }
-    node* tail() const { return _tail; }
+    node* head() const { return _head; };
+    node* tail() const { return _tail; };
 
     // **** Implement ALL the following methods ****
 
     // Returns the node at a particular index (0 is the head). If n >= size()
     // return nullptr; if n < 0, return the head of the list.
     // Must run in O(n) time.
-    node* at(int n) const;
+    node* at(int n) const{
+      if(n >= size())
+        return nullptr;
+      else if(n < 0)
+        return _head;
+      else
+      {
+        node* current = _head;
+        for(int i = 0; i < n; i++)
+        current = current->next;
+        return current;
+      }
+    };
 
     // Insert a new value, after an existing one. If previous == nullptr, then
     // the element is added *before* the head.
     // Must run in O(1) time.
-    void insert(node *previous, int value);
+    void insert(node *previous, int value)
+    {
+      node* n = new node();
+      n->value = value;
+      n->next = nullptr;
+      n->prev = nullptr;
+
+      if(previous == nullptr) //list is empty or insertion before head
+      {
+        n->next = _head;
+      }
+      if(n->next != nullptr)
+        {n->next->prev = n;
+        }
+      if(_tail == nullptr){
+        _tail = n;
+        _head = n;
+      }
+      else
+      {
+        //set the 4 links when a node is inserted after previous- i.e. 2 links from n to previous and next node
+        //1 link from previous to n and next node to n
+        n->next = previous->next;
+        n->prev = previous;
+        if(n->next != nullptr) {
+          n->next->prev = n;
+          previous->next = n;
+        }
+
+        if(previous == _tail){
+          _tail = n;
+        }
+      }
+};
 
     // Delete the given node. Should do nothing if which == nullptr.
     // Must run in O(1) time.
@@ -50,19 +95,29 @@ class dlist {
 
     // Remove the first element
     // Must run in O(1) time
-    void pop_front();
+    void pop_front() {remove(_head);};
 
     // Remove the last element
     // Must run in O(1) time
-    void pop_back();
+    void pop_back() {remove(_tail);};
 
     // Get the size of the list
     // Should run in O(n) time at the worst
-    int size() const;
+    int size() const
+    {
+      node* n = _head;
+      int count = 0;
+      while(n != nullptr)
+      {
+        n = n->next;
+        count++;
+      }
+      return count;
+    };
 
     // Returns true if the list is empty
     // Must run in O(1) time
-    bool empty() const;
+    bool empty() const {return _head == nullptr;};
 
   private:
     node* _head = nullptr;

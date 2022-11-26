@@ -29,60 +29,129 @@ class dlist {
     // Returns the node at a particular index (0 is the head). If n >= size()
     // return nullptr; if n < 0, return the head of the list.
     // Must run in O(n) time.
-    node* at(int n) const;
+    dlist::node* dlist::at(int n) const
+    {
+      if(n >= size())
+        return nullptr;
+      else if(n < 0)
+        return _head;
+      else
+      {
+        node* current = _head;
+        for(int i = 0; i < n; i++)
+        current = current->next;
+        return current;
+      }
+    };
 
     // Insert a new value, after an existing one. If previous == nullptr, then
     // the element is added *before* the head.
     // Must run in O(1) time.
-    void insert(node *previous, int value);
+    void dlist::insert(node *previous, int value)
     {
-      if(a == nullptr) {
-        // Insert new head
-        hd = new node{x,hd}; // {value,next}
+      node* n = new node();
+      n->value = value;
+      n->next = nullptr;
+      n->prev = nullptr;
 
-        if(tl == nullptr){
-          tl = n;
+      if(previous == nullptr)
+      {
+        n->next = _head;
+      }
+      if(n->next != nullptr)
+        {n->next->prev = n;
+        }
+      if(_tail == nullptr){
+        _tail = n;
+        _head = n;
+      }
+      else
+      {
+        n->next = previous->next;
+        n->prev = previous;
+        if(n->next != nullptr) {
+          n->next->prev = n;
+          previous->next = n;
+        }
+
+        if(previous == _tail){
+          _tail = n;
         }
       }
-      else {
-        // Insert after a
-        a->next = new node{x,a->next} //only working with node POINTERS
-
-        if(a == t1)
-          t1 = n;
-      }
-    }
+    };
     // Delete the given node. Should do nothing if which == nullptr.
     // Must run in O(1) time.
-    void remove(node* which);
+    void dlist::remove(node* which)
+    {
+    if(which == nullptr){
+      return;
+    }
+    else
+    {
+      node* prev = which->prev;
+      node* next = which->next;
+
+      if(prev != nullptr){
+        prev->next = which->next;
+      }
+      if(next != nullptr){
+        next->prev = prev;
+      }
+      if(which == _head){
+        _head = next;
+      }
+      if(which == _tail){
+        _tail = prev;
+      }
+      delete which;
+      }
+    };
+
 
     // Add a new element to the *end* of the list
     // Must run in O(1) time.
-    void push_back(int value);
+    void dlist::push_back(int value)
     {
-      insert(tl, x);
-    }
+      insert(_tail, value);
+    };
     // Add a new element to the *beginning* of the list
     // Must run in O(1) time.
-    void push_front(int value);
+    void dlist::push_front(int value)
     {
-      insert(nullptr, x);
-    }
+      insert(nullptr, value);
+    };
     // Remove the first element
     // Must run in O(1) time
-    void pop_front();
+    void dlist::pop_front()
+    {
+      remove(_head);
+    };
 
     // Remove the last element
     // Must run in O(1) time
-    void pop_back();
+    void dlist::pop_back()
+    {
+      remove(_tail);
+    };
 
     // Get the size of the list
     // Should run in O(n) time at the worst
-    int size() const;
+    int dlist::size() const
+    {
+      node* n = _head;
+      int count = 0;
+      while(n != nullptr)
+      {
+        n = n->next;
+        count++;
+      }
+      return count;
+    };
 
     // Returns true if the list is empty
     // Must run in O(1) time
-    bool empty() const;
+    bool dlist::empty() const
+    {return _head == nullptr;}
 
   private:
     node* _head = nullptr;
@@ -98,7 +167,27 @@ class dlist {
 
    Must run in O(m) time, where m is the length of the shorter of the two lists.
 */
-bool operator== (const dlist& a, const dlist& b);
+bool operator== (const dlist& a, const dlist& b)
+{
+  int size1 = a.size();
+  int size2 = b.size();
+  if(size1 != size2){
+      return false;
+  }
+  else
+  {
+    for(int i = 0; i < size1; i++)
+    {
+      dlist::node* n1 = a.at(i);
+      dlist::node* n2 = b.at(i);
+      if(n1->value != n2->value){
+        return false;
+      }
+    }
+  }
+
+  return true;
+};
 
 /* a + b
    Returns a new list consisting of all the elements of a, followed by all the
@@ -106,7 +195,22 @@ bool operator== (const dlist& a, const dlist& b);
 
    Must run in O(n) time in the length of the result.
 */
-dlist operator+ (const dlist& a, const dlist& b);
+dlist operator+ (const dlist& a, const dlist& b)
+{
+  dlist res;
+  int sz = a.size();
+  for(int i = 0;i < sz; i++)
+  {
+    res.push_back(a.at(i)->value);
+  }
+
+  sz = b.size();
+  for(int i = 0;i < sz; i++)
+  {
+    res.push_back(b.at(i)->value);
+  }
+  return res;
+};
 
 /* reverse(l)
    Returns a new list that is the *reversal* of l; that is, a new list
@@ -114,4 +218,12 @@ dlist operator+ (const dlist& a, const dlist& b);
 
    Must run in O(n) time.
 */
-dlist reverse(const dlist& l);
+dlist reverse(const dlist& l)
+{
+  dlist list;
+  int sz = l.size();
+  for(int i = 0; i < sz; i++){
+    list.push_front(l.at(i)->value);
+  }
+  return list;
+};

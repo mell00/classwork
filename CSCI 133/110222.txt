@@ -1,0 +1,110 @@
+Midterm 2 Review
+----------------
+
+3. Recursion and Sorting
+------------------------
+ex: give two example strings for s, length >= 4, one that makes f return true
+and one that makes f return false
+
+bool f(string s)
+{
+  if(s.empty())
+    return false;
+  else if(s.back() == '!')
+    return true;
+  else {
+    s.pop_back();
+    return f(s);
+  }
+}
+
+"hello!" --> true
+"abcd" --> false
+"a!cd" --> true
+linearly recursive (it goes straight down, doesnt split into two different things)
+and tail recursive
+
+ex: recursion tree
+
+ex: what will the function f return for x = 3, y = 5?
+int f(int x,int y) // linearly recursive, not tail recursive
+{
+  if(x==0)
+    return 0;
+  else
+    return f(x-1,y) + y;
+}
+
+15
+
+-should know how all of the O(n^2) algorithms work
+
+ex: write a modified selection sort that finds the largest remaining element and
+swaps it to the end
+
+void sel_sort(vector<int>& v)
+{
+  for (int i = v.size()-1; i > 0; --i){ // loop now goes right to left
+    // find largest in v[0]...v[i]
+    int largest = i;
+    for (int j = 0; j < i; ++j)
+      if(v[j] > v[largest])
+        largest = j;
+    swap(v[i],v[largest]);
+  }
+}
+
+ex: show the results of running the partition algorithm shown in class on the
+following array with pivot = 15
+|0|20|15|12|4|27|1|38|
+ans: |0|1|4|12|15|27|20|38|
+ex: how many calls to the merge function will be performed while mergesorting
+this array?
+  - note: the answer is not affected by the values in the array, only its size
+  |27|15|0|2|7|3|
+  |27|15|0| |2|7|3|
+  |27|15| |0| |2| |7|3|
+  |27| |15| |0| |2| |7| |3|
+  then
+  |27|15| |0| |2| |7|3|
+  |27|15|0| |2|7|3|
+  |27|15|0|2|7|3|
+
+4. Binary Search Trees
+----------------------
+ex: write a function max which returns a pointer to the node containing
+the largest value in the binary search tree
+
+node* max(node* n)
+{
+  while(n->right != nullptr){
+    n = n->right;
+  }
+  return n;
+}
+
+ex: write a function max which returns a pointer to the node containing
+the largest value in the binary (non-search) tree
+
+node* max(node* n)
+{
+  if(n->left == nullptr && n->right = nullptr)
+    return n->value;
+  else
+  {
+    int l = 0;
+    if(n->left != nullptr)
+      l = max(n->left);
+    else
+      l = INT_MIN;
+    int r = 0;
+    if(n->right != nullptr)
+      r = max(n->right);
+    else
+      r = INT_MIN;
+    return max({n->value,l,r});
+  }
+
+}
+
+ex: write a function that does a left or right rotation

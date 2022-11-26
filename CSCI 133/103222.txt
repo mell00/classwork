@@ -1,0 +1,72 @@
+AVL trees
+---------
+-a binary search tree with the height-balance property (if you look at any node,
+the absolute value of the difference of its node->left and node->right is less than or equal to 1)
+-types of imbalances:
+  -outside imbalance at p
+    -solution: rotate c with p
+  -inside imbalance at g
+    -solution: rotate c with p, then rotate c with g
+-fix lowest imbalance you can find, as soon as it becomes imbalanced
+-when adding values to tree, update the heights of all values
+
+Splay trees
+-----------
+-amortized (happening over time) binary search tree. they are balanced on average,
+over many operations.
+-after every operation (find, insert, erase) we perform a splay(n) starting at affected
+node n (parent node p, for erase)
+-notices which nodes are used as frequently, frequently used nodes are sent to the top center
+while less frequently used nodes are pushed out into the fringes of the tree
+-splay(n)
+  -while n is not the root:
+    -case zig: if n is a child of the root, rotate n with the root
+    -case zig-zig: if n is a left/left or right/right grandchild, rotate p with g
+    then rotate n with p (NOT A DOUBLE ROTATION, ITS TWO ROTATIONS OF DIFFERENT NODES)
+    -case zig-zag: if n is a left/right or right/left grandchild, then double-rotate n
+
+Applications of Splay(n)
+------------------------
+-tree splitting
+  -if given <= n and > n, splay(n) then cut
+-"easy" erase
+  -when erasing n, splay largest value in left half or smallest value in right half,
+  then reattach right half/left half respectively
+
+Tree Traversals
+---------------
+- traversal: a function or process that "visits" every node in a tree in some order
+ex: write a function void print(node* n); which prints the node values 2, 10, 15, 27, 38, 40, 51
+ascending.
+void print(node* n) //the following algorithm is an in-order traversal
+{
+  if(n==nullptr){} //empty
+  else{
+    print(n->left);
+    cout << n->value << " ";
+    print(n->right); //this code works thanks to recursion
+  }
+
+}
+
+void print(node* n) //the following algorithm is an post-order traversal
+{
+  if(n==nullptr){} //empty
+  else{
+    print(n->left);
+    print(n->right);
+    cout << n->value << " ";
+  }
+
+}
+
+void print(node* n) //the following algorithm is an pre-order traversal
+{
+  if(n==nullptr){} //empty
+  else{
+    cout << n->value << " ";
+    print(n->left);
+    print(n->right);
+  }
+
+}
