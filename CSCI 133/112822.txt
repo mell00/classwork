@@ -1,0 +1,148 @@
+Module 6: Disjoint Sets
+-----------------------
+
+struct node {
+  int index;
+  node* parent = nullptr;
+  int rank = 0;
+};
+
+array -------------
+index |0|1|2|3|4|5|
+rank  |0|0|0|0|0|0|
+parent|/|/|/|/|/|/|
+
+ex: lets say we do merge(0,5)
+  Then index 0 and 5 are in the same set
+
+  array -------------
+  index |0|1|2|3|4|5|
+  rank  |0|0|0|0|0|0|
+  parent|/|/|/|/|/|/|
+        |---------->
+  look at index 0, then follow its parent pointer until it reaches the other node (5)
+  now index 0 is a child of 5
+
+ex: merge(1,0)
+  array -------------
+  index |0|1|2|3|4|5|
+  rank  |0|0|0|0|0|0|
+  parent|/|/|/|/|/|/|
+         |-|------->
+  now index 1 is also a child of 5
+  0 and 1 are now in the same group, and 5 is their representative
+
+ex: merge(3,4)
+  array -------------
+  index |0|1|2|3|4|5|
+  rank  |0|0|0|0|0|0|
+  parent|/|/|/|/|/|/|
+               |-|
+  now index 3 is a child of 4
+
+ex: merge(3,1)
+  array -------------
+  index |0|1|2|3|4|5|
+  rank  |0|0|0|0|0|0|
+  parent|/|/|/|/|/|/|
+
+  now index 4 is a child and 3 is a grandchild of 5, their representative
+
+-operations:
+  -rep(i): find and return the root of i's tree (follow parents until nullptr)
+  -merge(a,b): combine a and b's groups
+    1) let i = rep(a)
+    2) let j = rep(b)
+    3) set i's parent to j
+
+-optimizations:
+  -path compression: flattens the tree by running a loop that makes each node
+  a child of the representative
+    -done in rep() function
+  -merge by rank: when merging, make the smaller ranked tree a child (b) of the
+  larger (a)
+    -done in merge() function
+    -the rank of the parent becomes max(a's rank, b's rank + 1)
+    -rank: an approximation of tree height
+  -runtime of both of the above optimizations is O(alpha(n)), where alpha is the
+   inverse Ackermann function
+
+Module 7: Graphs
+----------------
+- graph: consists of:
+  - a set of vertices (or nodes) V
+  - a set of edges (or arcs) E
+  connecting vertices
+  -directed graph: arrows have directions (that is, a->b does not imply b->a)
+    ex: V = {0,1,2,3,4,5,6,7,8,9}
+        E = {(0,2),(2,1),(1,0),(3,1),(3,2),(3,4),(4,5),(5,6),(6,5),(4,7),
+              (7,3),(8,7),(8,9),(9,7)}
+  -simple graph: just one edge between vertices
+  -unweighted graph: no extra information attached to nodes besides indexes
+    -any extra info is stored in arrays, the indexes determine the placement
+    within a graph
+  note: a vertice cannot point to itself
+  -in-edge: an edge pointing into the vertex
+  -out-edge: an edge pointing out of a vertex
+  -in-degree: number of in-edges
+  -out-degree: number of out-edges
+  -neighbors (adjacency)
+    -neighbors are the out-edge vertices of a vertex
+    -in other words, the neighbors are adjacent to the vertex
+  -sparse graph: number of edges is much less than the maximum
+    - |E| << n(n-1)
+  -dense graph: number of edges is close to the maximum
+    - |E| =~ n(n-1)
+  -source vertex: vertex with only out-edges (in-degree = 0)
+    -universal source: vertex with out-edges to all other vertices
+     (out-degree = n-1)
+      -sometimes called "initial"
+  -sink vertex: a vertex with only in-edges (out-degree = 0)
+    -universal sink: vertex with in-edges from all other vertices
+     (in-degree = n-1)
+      -sometimes called "terminal"
+  -the transpose of a directed graph inverts the in/out degrees, directions of
+  edges
+  -path: sequence of vertices connected by edges
+    ex: <7,3,4,5,6>, path length = 4
+    -there have to be links between the vertices in the brackets
+    -path length = num of edges
+      ex: <4> length of 0
+    -"connected": if a path exists from a to b, we say "a" is connected
+    to b
+      ex: 7 ~~> 6 (7 is connected to 6)
+      -strongly connected: a path exists between all pairs of vertices in a
+      directed graph
+      -weakly connected: a path exists between all pairs of vertices
+      ignoring directions in a directed graph
+-graph representations:
+  -adjacency list: array/vector of linked lists
+    -where can I get to from a particular index?
+    -memory: O(E + V)
+    -looping over all edges: O(E + V)
+    -out-edges(a): O(out-degree(a))
+    -out-degree(a): O(1)
+    -in-edges(b): O(E + V)
+    -in-degree(b): O(E + V)
+    -a->b exist: O(out-degree(a))
+  -adjacency matrix: |V| x |V| square matrix (array)
+    -where can I get to from a particular index?
+    -memory: O(V^2)
+    -looping over all edges: O(V^2)
+    -out-edges(a): O(V)
+    -out-degree(a): O(V)
+    -in-edges(b): O(v)
+    -in-degree(b): O(V)
+    -a->b exist: O(1)
+-graph traversal and search:
+ -traversal: "loop" over all vertices reachable from a starting vertex
+ -search: a traversal that stops early at some destination node
+ -breadth-first search/traversal:
+  -explores the vertices in order of increasing distsnce from starting vertex
+  ex: BFT(0)
+      0, 2, 6, 5, 1, 9, 7, 3, 4, 8
+ -depth-first search/traversal:
+  -pick a path, follow to dead end, then backtrack to the last vertex
+  where we had choices
+ ex: DFT(0)
+     

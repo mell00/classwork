@@ -12,6 +12,7 @@ using namespace std;
 
 #define HASH_INTS = 65536;
 #define BINS = 128;
+#define REMAINDER = 65413;
 
 unsigned char char_to_unsigned(char c) {
     return static_cast<std::make_unsigned<char>::type>(c);
@@ -24,17 +25,13 @@ int bins[BINS + 1];
 vector<char> titles = ["String Length","First Character","Checksum","Remainder",
 "Multiplicative"];
 
-void locate_hashes(int k){
-  for (int i = 0; i < k, ++i){
-    cout << hashes.at(i) << endl;
+int base256(string s){
+  int h = 0;
+  for(unsigned int i = 0; i < s.length(); ++i){
+    h = (256*i)*(char_to_unsigned(s[i]));
   }
-};
-
-void bins(){
-  for (int i = 0; i < BINS, ++i){
-    cout << bins[i] << endl;
-  }
-};
+  return h;
+}
 
 void division_of_bins(string data){
   int c;
@@ -56,17 +53,17 @@ void division_of_bins(string data){
 
 float chi_squared_test(){
   double c2 = 0;
-  double expected = 99170/HASH_INTS;
+  double expected = 99170/65535.0;
   for (int i = 0; i < HASH_INTS; ++i){
     c2 += pow(expected - hashes[i], 2)/expected;
   }
-  boost::math::chi_squared c2d(HASH_INTS);
+  boost::math::chi_squared c2d(HASH_INTS - 1.0);
   float p = boost::math::cdf(c2d, c2);
-  return p = (1 - p) * 100;
+  return p;
 };
 
-void output(string data){
-  int p;
+void output(string titles){
+  float p;
   division_of_bins();
   p = chi_squared_test();
   cout << data << "p-value = " << p << endl;
@@ -103,7 +100,8 @@ int first_char()
     {
       inStream >> s;
 
-      uint16_t h = s[0] % HASH_INTS;
+      uint16_t h = 0;
+      h = char_to_unsigned(s[0]) % HASH_INTS;
 
       hashes.at(h)++;
       }
@@ -122,9 +120,9 @@ int check_sum()
     {
       inStream >> s;
 
-      uint16_t h = s[0];
+      uint16_t h = char_to_unsigned(s[0]);
       for (int i = 1; i<s.length(); ++i){
-        h = (h+s[i]) % HASH_INTS;
+        h = (h+char_to_unsigned(s[i])) % HASH_INTS;
       }
       hashes.at(h)++;
       }
@@ -144,9 +142,9 @@ int rem_hash()
     {
       inStream >> s;
 
-      uint16_t h = s[0] + 128;
-      for (int i = 1; i<s.length(); ++i){
-        h = (256 * h + s[i] + 128) % HASH_INTS;
+      uint16_t h = char_to_unsigned(s[0]);
+      for (char c : s){
+        h = (256 * h + char_to_unsigned(c)) % REMAINDER;
       }
       hashes.at(h)++;
       }
@@ -167,12 +165,12 @@ int mult_hash()
     {
       inStream >> s;
 
-      double h = s[0];
-      for (int i = 1; i<s.length(); ++i){
-        h = fmod(A(256 * k + c),1);
+      double h = char_to_unsigned(s[0]);
+      for (unsigned int i = 1; i<s.length(); ++i){
+        h = HASH_INTS*fmod(A(256*h + char_to_unsigned(s[i])),1);
       }
       h* = HASH_INTS;
-      hashes.at(h)++;
+      hashes.at(uint16_t(h))++;
       }
     output(titles[4]);
     hashes.clear();

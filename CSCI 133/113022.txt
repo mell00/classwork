@@ -1,0 +1,121 @@
+Graphs
+------
+-traversal methods
+  -breadth-first traversal BFT(n)
+    -in order of increasing distance from starting node (at distance 0)
+    -for each loop, search for non-explored nodes then process the node at the front of the queue,
+    then repeat until the queue is empty
+    (1) mark all vertices as not explored
+    (2) enqueue(n)
+    (3) while the queue is not empty
+        (a) let a = dequeue()
+        (b) mark a as explored
+        (c) for each outedge a->b, b not explored
+          (1) enqueue(b)
+    -runtime: O(V + E); memory: O(V + E)
+  -breadth-first traversal BFT(n)
+    -guaranteed to fetch the shortest route from one node to another
+    -in order of increasing distance from starting node (at distance 0)
+    -for each loop, search for non-explored nodes then process the node at the front of the queue,
+    then repeat until the queue is empty
+    -this modified BFT also tracks the path of the traversal by recording distance and parent
+      in arrays
+      (1) mark all vertices as not explored
+      (2) set all distances in distance array to infinity
+      (3) set all parents pi in parents array to -1
+      (4) enqueue(n)
+      (5) set n's distance to 0
+      (6) while the queue is not empty
+          (a) let a = dequeue()
+          (b) mark a as explored
+          (c) for each outedge a->b, b not explored
+            (1) enqueue(b)
+              - here, set b's distance = a's distance + 1
+                and set b's pi (parent) = a
+  -depth-first traversal DFT(n)
+    -arbitrarily picks a path from starting node n, then backs up if it
+     reaches a dead end to the node where it could have been different
+      -if all connecting nodes have been explored, then traversal returns
+      the existing stack
+    (1) mark all vertices as not explored
+    (2) DFT-Rec(n)
+      -DFT-Rec(a)
+        (1) mark a explored
+        (2) for each outedge a->b, b not explored:
+          (a) DFT-Rec(b)
+    -depth-first traversal DFT(n)
+      -arbitrarily picks a path from starting node n, then backs up if it
+      reaches a dead end to the node where it could have been different
+        -if all connecting nodes have been explored, then traversal returns
+        the existing stack
+      -parentheses principle
+    (1) mark all vertices as not explored
+    (2) set all node's distances = infinity
+    (3) set all node's parents pi to -1
+    (4) start, finish = -1
+    (5) set n's distance = 0
+    (6) DFT-Rec(n)
+      -DFT-Rec(a)
+        (1) set a's start = time, ++time
+        (2) mark a explored
+        (3) for each outedge a->b, b not explored:
+          (a) DFT-Rec(b)
+          (b) set b's distance = a's distance + 1
+          (c) set b's pi = a
+        (4) set a's finish = time
+        (5) ++time
+
+skipping weighted graphs
+
+Midterm Review
+--------------
+
+Module 5: Hash Functions
+-requirements for good hash function
+  -deterministic
+  -uniform distribution
+  -Avalanche effect
+  -low probability of collision
+
+ex: int hash(string s)
+{
+  int h = 0;
+  for(int i = 0; i < s.length(); i+=2){
+    h = h + s[i] * s[i + 1];
+  }
+  return h;
+}
+
+hash("potato") = ('p' + 'o') + ('t' + 'a') + ('t' + 'o')
+= (80(256^5) + 111(256^4) + 116(256^3) + 97(256^2) + 116(256^1) + 111(256^0)) % 10
+= (0(6) + 1(6) + 6(6) + 7(6) + 6(6) + 1(1)) % 10 = 21 % 10 = 1
+= (80(256^5)*111)+(116*97)+(116*111)
+lacks uniform distribution (not a big spread of products)
+
+Module 6: Binary Heaps, Disjoint Sets
+
+ex: insert these values into a max-heap: 12, 45, 37, 19, 52, 38
+see notebook; top to bottom, left to right
+
+ex: use the build-heap algorithm to build a heap out of these
+    values: 12, 45, 37, 19, 52, 38
+see notebook; start right to left, bottom to top
+
+Disjoint Set
+------------
+ex: construct a disjoint set with 7 elements and perform the following
+merges WITHOUT path compression or merge by rank:
+  merge(0,1)
+  merge(2,3)
+  merge(0,3)
+  merge(5,4)
+  merge(6,5)
+
+tallest tree = one to one (merge(0,1),merge(1,2),merge(2,3),....)
+
+ex: assume 0 = 1, 2 = 3, 0 = 3, 5 = 4, 6 = 5 and that we check in order
+(0,1), ... (0,6), (1,0), (1,2),....,(1,6),....(5,6)
+
+Module 7: Graphs
+----------------
+-code for BFT and DFT searches

@@ -1,0 +1,149 @@
+heap sort: top to bottom left to right
+build sort: right to left, bottom to top
+
+rep (elem e)
+{
+  while (e->parent != nullptr){
+    e = e->parent;
+  }
+  return e;
+}
+
+fix down (int n)
+{
+  while (n < size()){
+    int largest = n;
+    if (at(n) < at(left(n)))
+      largest = left(n);
+    else if (at(n) < at(right(n)))
+      largest = right(n);
+    if (largest != n)
+      swap(at(n),at(largest))
+      n = largest
+  }
+  else
+    return;
+}
+
+fix up (int n){
+  while (at(n) != max())
+    if (n > parent(n))
+      swap(at(n),at(parent(n)))
+      n = parent(n);
+  else
+    break;
+}
+
+fix up (int n){
+  if (n > parent(n))
+    swap (at(n),at(parent(n)))
+    n = parent(n)
+  else
+    return
+}
+
+fix down (int n){
+  while (n < size())
+  largest = n
+    if (at(n) < at(left(n)))
+      largest = left(n)
+    else if (at(n) < at(right(n)))
+      largest = right(n)
+    if (n != largest)
+      swap(at(n), at(largest))
+      n = largest;
+
+    else
+      return;
+}
+
+
+
+
+extract_max();
+x = h[1];
+swap(x,back());
+h.pop_back(x);
+fix_down(1);
+
+
+
+fix_down(int n){
+while (n < size())
+  largest = n;
+  if (at(n) < at(left(n)))
+    largest = left(n);
+  else if (at(n) < at(right(n)))
+    largest = right(n);
+  if (largest != n)
+    swap(at(n),at(largest))
+    n = largest;
+  else
+    return;
+}
+
+
+
+
+insert(int x){
+  h.push_back(x);
+  fix_up(size()-1);
+}
+
+
+
+extract_max(){
+  x = h[1];
+  swap(x,back());
+  h.pop_back();
+  fix_down(1);
+  return x;
+}
+
+
+insert(int x){
+  h.push_back(x);
+  fix_up(size-1);
+}
+
+
+
+
+
+
+merge(int x, int y){
+x = rep(x);
+y = rep(y);
+x->parent = y;
+}
+
+rep_compress(x) {
+while (parent(x) != nullptr)
+  x = parent(x);
+
+return x;
+}
+
+
+
+
+fix_up(int n){
+while (parent(n) != nullptr)
+  if (n > parent(n)
+    swap(at(n),at(parent(n)));
+    n = parent(n);
+else
+  return;
+}
+
+
+
+
+
+extract_max(int x){
+int x = h[1];
+swap (x,back());
+h.pop_back(x);
+fix_down(1);
+return x;
+}
