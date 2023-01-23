@@ -1,0 +1,139 @@
+CSCI 241 Assembly Language + Architecture
+-----------------------------------------
+Grading:
+-Canvas (open-note) quizzes 10 pts
+-Midterm 100 pts
+-Final 100 pts (open-book, includes section to make up missed pts on Midterm)
+-Individual assignments (unlimited resubmissions)
+-Group projects
+
+FCCSCI Server
+-------------
+SSH Clint: PuTTY (windows), Console (mac)
+Hostname: fccsci.fullcoll.edu
+Port: 5150
+Username: <first init.><last name>(2,3,..)
+Password: <student-id w/o @>
+
+Assembly Language
+-----------------
+- we will spend the most time learning how to use the Intel-compatible x86-64 (Linux) processor
+  -will also look at MIPS32 (academic, not really used in real world) and Z80 (used in
+  original Gameboy in the 1980s) processors
+  -whether program works or not depends on the assembler (assembly language equivalent to compiler)
+- low-level; one line of code in C++ might communicate multiple lines of assembly code to the processor
+
+Terminology
+-----------
+- byte: the smallest addressable portion of memory, always consists of 8 bits for x86-64 processor
+  - analogous to a char in C++
+- word: 2 bytes next to each other  |high byte|low byte|
+  ex: for integer 17, |1|7| (1 is higher digit, and 7 is lower digit)
+  - analogous to a short in C++
+- double-word (dword): 2 words (4 bytes) |high word|low word|
+  - can be divided in similar way to singular word
+  - analogous to an int in C++
+- quad-word (qword): 2 dwords/4 words/8 bytes |high dword|low dword|
+  - same division as words and dwords
+  - analogous to a long or pointer in C++
+- double-qword (dqword): 2 qwords/4 dwords/8 words/16 bytes/128 bits
+- kilo-byte (kB): "one-thousand" bytes (in base 2, NOT base 10), which is 1024 (2^10) bytes
+- mega-byte (mB): "one million" bytes (in base 2), which is 1048576 (2^20) bytes
+- giga-byte (gB): 2^30 bytes
+- tera-byte (tB): 2^40 bytes
+and so on...
+
+Number Systems
+--------------
+- decimal (base 10)
+  ex: "1357" = 1(10^3) + 3(10^2) + 5(10^1) + 7(10^0)
+- binary (base 2)
+  ex: "00101011" = 0(2^7) + 0(2^6) + 1(2^5) + 0(2^4) + 1(2^3) + 0(2^2) + 1(2^1) + 1(2^0)
+        = 2^5 + 2^3 + 2^1 + 2^0 = 32 + 8 + 2 + 1 = 43
+- hexadecimal (base 16)
+  0, 1, 2, ... , 7, 8, 9, a (10), b (11), c (12), d (13), e (14), f (15)
+  ex: "2a" = 2(16^1) + a(16^0) = 32 + 10 = 42
+  ex: "ff" = f(16^1) + f(16^0) = 15(16) + 15 = 240 + 15 = 255
+- on a computer, base 10 does not map nicely to existing bits as it requires more bits
+  -base 16 is preferable as it maps directly onto a single byte
+- base 2 byte range: 0000 0000 = 0 to 1111 1111 = 255
+- base 16 byte range: 00 = 0, ff = 255
+
+-assembly language files end with .s or .asm (Windows)
+
+hello.s
+-------
+;;;
+;;; hello.s (<- the ;;; means that this is a comment)
+;;; Prints Hello, World!
+;;;
+section .data
+
+msg       db    "Hello, world!", 10
+MSGLEN    equ    14
+
+section .text
+
+global _start
+_start:
+  mov      rax,   1   ; Syscall code = SYS_WRITE
+  mov      rdi,   1   ; Output stream = STDOUT
+  mov      rsi,   msg ; Address of string
+  mov      rdx,   MSGLEN ; Num of bytes to print
+  syscall
+
+  mov      rax,   60   ; Syscall code = SYS_EXIT
+  mov      rdi,   0    ; Exit code (success)
+-------
+notes:
+  msg is a label for the address
+  db means "take this stuff and dump it into the file, don't interpret it as code"
+    short for "data bytes"
+  10 is the ASCII code for the newline character
+  equ defines the constant 14
+  section .data is analogous to global variables in C++
+  _start is analogous to int main() in C++
+  global _start says "don't throw away the name _start" because some other part of the system
+  will use it later
+  in _start, rax = 1
+  assembler performs integer operations, but runtime operations on the address shift the printout of the data stored
+  dw - data words
+  dd - data dwords
+  dq - data qwords
+
+A line in Assembly
+------------------
+ex: msg: db "Hello world!", 10 ; 3 bytes
+ex:      mov rax,           1 ; rax is the destination, and 1 is the src.
+ex:      syscall
+- syntax is <label>: <instruction> <operands...> ; <comment>
+  - all components of a line are optional; for example, comments omit the label, instructions, and operand(s)
+  - case insensitive
+- types of sections:
+  .data - global, read/write data
+  .rodata - read-only global data (i.e. string constants)
+  .bss - global uninitialized data (reserved space in memory)
+  .text - executable (read-only) code
+- equ instruction defines a constant equal to whatever number address
+
+;;;
+;;; comments
+;;;
+section .data
+msg: db "Hello world!", 10
+MSGLEN: equ 14
+
+section .text
+global _start
+
+_start:
+  mov rax, 1
+  mov rdi, 1
+  mov rsi, msg
+  mov rdx, MSGLEN
+  syscall ; does the actual printing
+;;; the above code prints Hello, world!
+  mov rax, 60
+  mov rdi, 0
+  syscall ; does the equivalent of return 0;
+;;; this code exits the program
