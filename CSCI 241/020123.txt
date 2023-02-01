@@ -1,0 +1,174 @@
+Arithmetic Instructions
+-----------------------
+add ____________, ____________ ; destination = destination + src
+    destination       src
+sub ____________, ____________ ; destination = destination + (-src)
+    destination       src
+inc ____________ ; destination = destination + 1
+    destination
+dec ____________ ; destination = destination - 1
+    destination
+neg ____________ ; -destination = destination
+    destination
+-destination and src must have the same size (byte, word, dword, qword)
+-destination can be a register or memory operand (a thing you can change), not a constant
+-src can be a register, mem, or immediate (constant)
+  -ex:
+  add rax, 1
+-both destination and src cannot be mem in one instruction
+
+Multiplication
+--------------
+mul ____________; <rdx:rax> = <rdx:rax> x src
+       src       (treats rax as the low qword, and rdx as the high qword)
+(unsigned)
+
+imul ____________; <rdx:rax> x= src
+       src       (treats rax as the low qword, and rdx as the high qword)
+(signed)
+
+imul ____________, ____________ ; destination = destination x src
+    destination       src
+
+imul ____________, ____________, _____________ ; destination = s1 x s2
+    destination        s1             s2
+-source NEEDs to be a register
+
+
+Division
+--------
+div ____________; rax = <rdx:rax> / src
+        src       rdx = <rdx:rax> % src
+(unsigned)
+
+idiv ____________; <rdx:rax> /= src
+        src
+(signed)
+imul ____________, ____________ ; destination = destination x src
+      destination       src
+
+imul ____________, ____________, _____________ ; destination = s1 x s2
+     destination        s1             s2
+
+
+ex: multiply rax by 10
+  mov r10, 10
+  mul r10
+  ;;; ---> <rdx:rax>
+  ;;; note: if rdx is not equal to 0, there may be an error with rax. make sure to zero out rdx before computation
+
+ex: divide rax by 10
+  mov r10, 10
+  div r10 ; Crash!!!
+  ;;; don't do the above. instead:
+
+  mov rdx, 0
+  mov r10, 10
+  div r10 ; works!
+
+  XOR
+  ---
+  -0 xor 0 -> 0
+  -0 xor 1 -> 1
+  -1 xor 0 -> 1
+  -1 xor 1 -> 0
+
+  mov rdx, 0
+  xor rdx, rdx ; === 0; effectively clears all of the bits in rdx; more compact version of mod rdx, 0
+
+Branching and Looping
+---------------------
+  :
+  :
+  mov rcx, 10
+begin:
+     :
+     :
+     loop begin ; decrements rcx as long as rcx is not equal to 0; otherwise, the program moves on
+
+-comparisons (cmp, test)
+  -cmp ___, ___ ; computes a - b, then updates the flags
+        a    b
+  -test ___, ___ ; a & b, then updates the flags
+         a    b
+  -they don't jump anywhere, they just set up the flags
+  -remember: all arithmetic instructions also update the flags, so be careful
+  ex: rax + rbx == 0
+      add rax, rbx
+      cmp rax, 0
+      OR
+      add rax, rbx
+-(unconditional) branches (jmp)
+  -jmp _______; jumps to the address of label, unconditionally
+        label
+  ex: :
+      :
+ label:
+      :
+      :
+      jmp label ; produces an infinite loop
+      :
+
+  ex:
+    jmp label ; skips over to label
+    :
+    :
+    label:
+    :
+-conditional branches (jcc)
+  -jcc _______; jumps to label if the flags have the configuration code given by cc, otherwise carries out next instruction
+        label
+   -cc is a placeholder for any condition code
+      -signed comparisons:
+        -z: jump if zero flag is set (zf = 1)
+        -c: jump if carry flag is set (cf = 1)
+        -o: jump if overflow flag is set (of = 1)
+        -s: jump if sign flag is set (sf = 1)
+        ex: if a = b, zf = 1, cf = 0, of = 0, and sd = 0
+        -nz: jump if zero flag is unset (zf = 0)
+        -nc: jump if carry flag is unset (cf = 0)
+        -no: jump if overflow flag is unset (of = 0)
+        -ns: jump if sign flag is unset (sf = 0)
+        -je: same as z
+        -jne: same as nz
+        -jl: sf is not equal to of
+        -jle: sf is not equal to of OR zf = 1
+        -jg: sf = of AND zf = 0
+        -jge: sf = of
+        -jnb: ..............
+      -unsigned comparisons:
+        -jb: same as c
+        -jbe: cf = 1 OR zf = 1
+        -ja:  cf = 0 AND zf = 0
+        -jae: same as nc
+  ex:
+    :
+    :
+    jz label ; jump if zero flag = 1; otherwise, continue on with the next instruction
+    :
+    :
+  label:
+    :
+    :
+
+  ex:
+    :
+    :
+    mov rcx, 10
+  label:
+    :
+    :
+    loop label
+
+  can instead be written with jcc as...
+    :
+    :
+    mov rcx, 0
+  label:
+    :
+    :
+    dec rcx ; update flags
+    cmp rcx, 0 ; update flags
+    jne label ; or jnz
+
+    ;;; the above is the equivalent of a do-while loop in C++

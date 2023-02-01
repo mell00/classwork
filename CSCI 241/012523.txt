@@ -1,0 +1,166 @@
+Sections
+--------
+.data* (global r/w data)
+.rodata (global read-only data)
+.bss (reserved global memory)
+.text* (read-only code, no self-modifying code or data)
+note: it is possible to alternate back and forth between sections throughout a script,
+but this is bad form in most cases
+
+
+section .data
+
+                      address       how many bytes forward
+msg:        db     "Hello world!",           10                 ;String to print
+label   instruction              operands                            comment
+
+MSGLEN:      equ          14
+label     instruction   operand
+
+MSGLEN: equ ($    -    msg)
+
+notes:
+-define MSGLEN for strings only
+-operand of 10: newline (\n)
+-$ is address of line (and of string), while msg is address of 'H'
+
+section .text
+
+global _start
+_start:         ;equivalent to int main() in C++
+
+Syscalls
+--------
+-operating-system functions
+-assembly programs are self-contained, and don't include any standard libraries like C++
+-registers:
+  -basically assigning syscall values to each register
+  -rax: syscall code (eg. 1)
+  -rdi: destination stream (where you are printing to; usually 1)
+    ex in C++: ______ << "Hello";
+  -rsi: address of where to print (msg)
+  -rdx: length in bytes (MSGLEN)
+  -r10: (unused for syscall code 1)
+  -r8: (unused for syscall code 1)
+  -r9: (unused for syscall code 1)
+  -syscall code of 1 - write to screen
+  -note: can assign constants to replace as operand, making program easier to read
+  -note: order of commands doesn't matter
+
+mov rax, 1
+mov rdi, 1
+mov rsi, msg
+mov rdx, MSGLEN
+syscall ;execute code
+
+mov rax, 60 ;syscall code 60 exits the program
+mov rdi, 0
+syscall ;execute code
+
+Assembler
+--------
+asm. hello.s
+./hello.s (automatically assemble the file)
+--------
+yasm -g dwarf2 -f elf64 hello.s
+ld -g -o hello hello.o (manually assemble the file)
+--------
+objdump -d -M intel hello.o (returns disassembled assembly script)
+
+gdb ./<program name>
+break _start
+run
+n
+
+The mov instruction
+-------------------
+-moves data at runtime
+-can move bytes, words, dwords, or qwords (but not anythihng larget)
+-source and destination must be the same size
+-cannot do a memory to memory move
+
+syntax; mov:    ____________                     ,_______________
+              destination (register or memory)   source (register, memory, immediate (constant))
+
+Registers
+---------
+-global, on-CPU (do not exist in memory, so they are fast), storage locations
+-rax*, rbx, rcx, rdx*, rdi*, rsi*, rbp, rsp, r8, r9, ......., r15
+  -rbp and rsp are used for the stack
+  -these are all qword sized
+-rif: flags register
+-rip: instruction pointer
+
+SYS_READ (= 0)
+--------------
+-reads bytes from an input stream into memory
+rax = 0 (syscall code)
+rdi = 0 (input stream, 0 = STDIN)
+rsi = ...(address of input buffer)
+rdx = ...(size of buffer, max # of bytes to read)
+----------after syscall--------------------------
+rax = # of bytes read (return)
+
+;;;
+;;; input.s (reads inputted string, then writes it to the screen)
+;;;
+section .data
+
+BUFLEN: equ 256
+buffer: times BUFLEN db 0; ;repeat db '#' 256 times
+
+SYS_WRITE: equ 1
+SYS_READ: equ 0
+STDOUT: equ 1
+STDIN: equ 0
+SYS_EXIT: equ 60
+
+;;; the above values can be added to an include file to clean things up, but not required
+
+section _text
+
+global _start
+_start:
+
+  mov rax, SYS_READ
+  mov rdi, STDIN
+  mov rsi, buffer
+  mov rdx, BUFLEN
+  syscall ;equivalent to cin
+
+  mov rdx, rax
+  mov rax, SYS_WRITE
+  mov rdi, STDOUT
+  mov rsi, buffer
+  syscall ;equivalent to cout
+
+  mov rax, SYS_EXIT
+  mov rdi, 0
+  syscall
+
+
+Arithmetic Instructions
+-----------------------
+add ____________, ____________ ; destination = destination + src
+    destination       src
+sub ____________, ____________ ; destination = destination - src
+    destination       src
+inc ____________ ; destination = destination + 1
+    destination
+dec ____________ ; destination = destination - 1
+    destination
+
+Flags (rif)
+----------
+Updates
+  ZF (zero flag)
+  SF (sign flag)
+  CF (carry flag) - is the sign of the result correct?
+  OF (overflow flag)
+  -automatically set after a result
+
+Binary Arithmetic
+-----------------
+ex: 01101011
+  + 10110110
+  ----------

@@ -1,0 +1,188 @@
+Registers
+---------
+-rax, rbx, rcx, rdx, rdi, rsi, rbp, rsp
+    -rdi, rsi used for strings and arrays
+    -rbp, rsp used for stack
+    -all of the other ones can be used for whatever you want
+-r8, r9, .... , r14, r15
+  -r8 (qword sized r8), r8d (dword), r8w (word), r8b (byte)
+-all of the above are 64-bit (qword) registers, and besides the exceptions listed above,
+it doesn't matter which registers you use
+
+ex: rax = 0x1234567890abcdef
+mov al, 0 ; 0x1234567890abcd00
+;;; here, ah = cd and al = ef and al is replaced with 0's (0x00)
+mov ax, 0 ; 0x1234567890ab0000
+;;; here, ax is the word cdef and ax is replaced with 0's (0x0000)
+
+-you cannot move between registers of different sizes
+ex: mov rdi, al; Error!
+
+but you can:
+ex: add rdi, al ; does not work
+mov rbx, 0
+mov bl, al ; put al into rbx (qword sized), with 0's in the rest of rbx
+add rdi, rbx ; then subsitute rbx into the expression
+
+Syscalls
+--------
+-rax: syscall code, return value
+-rdi, rsi, rdx, rl0, r8, r9: arguments
+-rcx, r11: "scratch" registers (allowed to overwrite whatever is in it)
+  ex: mov rcx, 0
+      syscall
+      ; now rcx is not equal to 0
+
+ex: print Hello 10x on a separate line
+--------------------------------------
+-copy the syscall 10x
+
+mov rax, 1
+mov rdi, 1
+mov rsi, 1
+mov rsi, hello
+mov rdx, HELLO_LEN
+syscall
+
+mov ax, 1
+syscall
+
+mov ax, 1
+syscall
+:
+:
+
+-one long string
+
+section .data
+hello: db "Hello!", 10, "Hello!", 10, "Hello!", 10, .....
+OR
+hello: times     10        db "Hello!", 10
+            times repeated
+
+The loop instruction
+--------------------
+      mov rcx, ....
+label:
+  :
+  :
+   loop label
+-the loop instruction:
+  -decrements rcx (which is the loop variable)
+  -if rcx is not = 0, jump to label
+  -if rcx = 0, continue
+
+ex: mov rcx, 10
+section .data
+
+hello: db "Hello!", 10
+HELLO_LEN: equ $-hello
+
+section .text
+global _start
+_start:
+    mov rxc, 10
+begin:
+    ; Print hello once
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, hello
+    mov rdx, HELLO_LEN
+
+    syscall
+
+    loop begin
+
+    ; SYS_EXIT
+    mov rax, 60
+    mov rdi, 0
+    syscall
+
+    ; this will cause an infinite loop
+
+instead....
+section .data
+
+hello: db "Hello!", 10
+HELLO_LEN: equ $-hello
+
+section .text
+global _start
+_start:
+    mov rxc, 10
+begin:
+    ; Print hello once
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, hello
+    mov rdx, HELLO_LEN
+
+    mov r12, rcx
+    syscall
+    ;;; Here, swap rcx with another register to prevent
+    ;;; syscall from touching the loop counter, like it does in the previous version
+    mov rcx, r12
+
+    loop begin
+
+    ; SYS_EXIT
+    mov rax, 60
+    mov rdi, 0
+    syscall
+
+ex: fill a buffer with 10 copies of Hello!
+
+section .data
+hello: db "Hello!", 10
+HELLO_LEN: equ $-hello
+buffer: times 70 db 0 ; big enough to hold 10 copies
+
+Nested loops
+------------
+
+mov r10, 10
+outer:
+     :
+mov r15, 15
+inner:
+     mov r15, rcx
+     :
+     :
+     mov rcx, r15
+     :
+     loop inner
+     :
+     mov rex, r10
+     loop outer:
+
+Arithmetic in Binary
+--------------------
+-converting binary to decimal
+  -multiply binary value of each position by decreasing powers of 2^n
+  ex: 0110 1011 => (0)2^7 + (1)2^6 + (1)2^5 + (0)2^4 + (1)2^3 + (0)2^2 + (1)2^1 + (1)2^0 = 107
+-ocnverting decimal to binary
+  -divide decimal number by two and find remainder (which will be the bits from right to left)
+
+Negative Representations
+------------------------
+-sign bit: if the high bit (the first bit) = 1, then the number is negative
+  ex: 0 0 1 1  0 0 1 0 -> the first 0 means that the number is +50
+  ex: 1 0 1 1  0 0 1 0 -> the first 1 means that the number is -50
+  -disadvantages:
+    -slower for CPU to process
+    - 1000 0000 = -0
+-biased representation: store a number x in binary as x + b (some bias value)
+  e.g. bytes, b = 127
+    +50 -> 177 = 10110001
+    -50 -> 77 = 01001101
+  ex: 0
+    0 -> 127 = 01111111
+    if first byte is 1, then number is > 0, otherwise, number is less than or equal to 0
+  -disadvantages:
+    -the numbers look weird and involve more work
+-two's complement: if x is negative, then flip all bits and add 1. positive x stored as-is
+  ex: 0 0 1 1  0 0 1 0 -> +50
+  ex: 1 1 0 0  1 1 0 1 + 1 -> 1 1 0 0  1 1 1 0 -> -50
+  ex: 0 0 0 0  0 0 0 0 -> 0
+  ex: 0 0 0 0  0 0 0 1 -> +1
+  ex: 0 0 0 0  0 0 0 1 -> 1 1 1 1  1 1 1 0 -> -1
