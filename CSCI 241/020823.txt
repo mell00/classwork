@@ -1,0 +1,277 @@
+Functions
+---------
+
+syntax: call __________
+              (label)
+        ret
+
+Parameters:
+----------
+rdi, rsi, rdx, rcx, r8, r9
+ 1,   2,   3,   4,  5,  6 parameters
+
+Return:
+  rax
+
+ex:
+_start:
+  :
+  call function ;jumps to line 21
+  :
+  :
+function:
+  :
+  :
+  ret ;jumps to line 18
+
+call ____________
+(1) push the address of the next instruction (the return address)
+(2) jump to the function's label
+
+ret
+(1) pops an address off the stack
+(2) jumps to that address
+
+ex:
+  function:
+    :
+    :
+  .while: ;function-local label; equivalent to function.while
+    :
+    :
+  .end_while: ;function.end_while
+    :
+    :
+
+  func2:
+    :
+    :
+  .while: ;func2.while
+    :
+    :
+  .end_while: ;func2.end_while
+
+C-Style String Length
+---------------------
+-in C, strings are null-terminated (null charcter at end of string)
+-in x86_64, strings are NOT null-terminated
+
+ex:
+section .data
+  msg: db "Hello!", 10, 0 ;<- 0 is the null terminator
+section .text
+  _start:
+    mov rdi, msg ;address of string
+    call strlen
+    ;rax = 7
+    strlen: ;rdi = address of string
+      mov rax, 0
+    .while:
+      cmp byte [rdi], 0
+      je .end_while ;when rdi is equal to 0
+      inc rdi
+      inc rax
+      jmp .while
+    .end_while:
+      ret ;returns to line 66
+
+
+  equivalent code in C:
+  rax = 0;
+  while(*rdi != 0){ <= label
+    ++rdi;
+    ++rax;
+  }
+  <= label
+  return rax;
+
+ex:
+section .data
+arr: dq 1, 2, -3, 4
+ARRLEN: equ ()$-arr)/8 ;gives size of array in byte, divided by 8 (num of bytes and qword)
+
+section .text
+  _start:
+    mov rdi, arr
+    mov rsi, ARRLEN
+    call hasneg
+    hasneg:
+      ;rdi, address of qword array
+      ;rsi = array length in qwords
+    .while:
+      cmp rsi,0
+      je .end_while
+      cmp qword[rdi],0 ;rdi is base register, 8 is the scale, and rdx is index register
+      jnl .endif ;found neg!
+      mov rax, 1
+      ret
+    .endif:
+      add rdi, 8
+      dec rsi
+      jmp .while
+    .end_while:
+      mov rax, 0
+      ret
+
+
+equivalent code in C++:
+rdx = 0 //array index
+while (rdx != rsi){ <-- label
+  if (rdi[rdx] < 0){
+    return 1; //true
+  }
+  ++rdx; <-- label
+}
+return 0; //false <-- label
+
+Switch-Case
+-----------
+-jump-table: array of addresses
+
+ex:
+section .text
+  :
+  :
+case0:
+  :
+  :
+case1:
+  :
+  :
+case2:
+  :
+  :
+
+mov rdx, qword[jtbl + 8*...] ;jump to whatever address is stored in rdx defined in jtbl
+jmp rdx ;jump to address in rdx
+section .data
+  jtble: dq case0,case1,case2,...
+
+ex: Calculator Program
+----------------------
+- integers and operations must be separated by spaces
+-hint: work left to right in base 10 notation, and have a register keep track of the exponent used to compute
+
+read_int:
+  ;rdi = address of buffer
+  ;reads int until space or newline
+  ;return value in rax
+
+C++ code interpretation:
+int a =...;
+int b =...;
+char op = ...;
+switch (op){
+  case '+':
+    a + b;
+  case '*':
+    a*b;
+    :
+    :
+    :
+}
+
+ex:
+
+section .data
+
+BUFLEN: equ 256
+buffer: times BUFLEN db 0
+
+jtbl: dq _start.case_plus, _start.case_minus, _start.case_mul, _start.case_div
+
+jmp_data: db '+', '-', '*','/'
+section .text
+global _start
+
+  Defines readint function
+  rdi = address of string
+  Returns:
+    rax = numeric value
+    rdx = address of space or newline
+%include "readint.s"
+
+_start:
+
+.while:
+  ;SYSREAD into buffer
+  mov rax, 0 ;SYS_READ
+  mov rdi, 0 ;STDIN
+  mov rsi, buffer ;Address of buffer
+  mov rdx, BUFLEN ;Length of buffer
+  syscall
+
+  ; buffer: ____ + ____\n
+  ;          a      b
+  mov rdi, buffer
+  call readint
+  mov r14, rax
+
+  inc rdx ;rdx points to operator
+  mov r13b, byte[rdx] ; r13 = operator
+
+  add rdx, 2 ; rdx points to b
+  mov rdi, rdx
+  call readint
+  mov r15, rax    ;r15 = b
+  ; switch(op) {
+  ;    case '+':
+  ;        rax = r14+r15;
+  ;     break;
+  ;}
+
+  ; Loop over jmp_data, searching for r13b
+  mov rdi, 0 ; array index
+.while2:
+  cmp rdi, 4
+  je .end_while2
+
+  cmp byte[jmp_data + rdi], r13b
+  je .found
+
+  inc rdi
+  jmp .while2
+
+.found:
+.end_while2:
+  ; rdi = array index
+  mov rax, qword[jtbl + 8*rdi]
+  jmp rax
+
+.case_plus:
+  mov rax, 14
+  add rax, 15
+  jmp .end_switch
+
+.case_minus:
+  mov rax, 14
+  sub rax, 15
+  jmp .end_switch
+
+.case_mul:
+  mov rax, r14
+  imul r15 ; automatically mutiplies this input by rax
+  jmp .end_switch
+
+.case_div:
+  mov rdx, 0
+  mov rax, r14
+  div r15
+  jmp .end_switch
+
+.case_default:
+  mov rax, 0
+  jmp .end_switch
+
+
+.end_switch:
+
+  ; print rax HERE
+  jmp .while
+
+  mov rax, 60
+  mov rdi, 0
+
+  note: to break .while function, you must append .while to _start, because .while is local to start
+
+  #ASSIGNMENT 1 is to print out these results

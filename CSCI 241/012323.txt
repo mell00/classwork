@@ -137,3 +137,8 @@ _start:
   mov rdi, 0
   syscall ; does the equivalent of return 0;
 ;;; this code exits the program
+
+How to execute program:
+-----------------------
+asm file_name.s
+./file_name

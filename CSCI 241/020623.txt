@@ -1,0 +1,62 @@
+Branching and Looping
+---------------------
+-comparisons
+  cmp (basically subtraction)
+  test (bitwise and)
+-conditional jump
+  jcc
+-unconditional jump
+  jmp
+
+;;;
+;;; to_upper.s
+;;;
+section .data
+
+string: db "THE cat In the hAT", 10
+STRLEN: equ $-str ;give length of string
+
+section .text
+global _start
+_start:
+
+  mov rdi, 0 ;int i = 0
+start_do:
+  ;rdi = string index
+  cmp byte[string + rdi], 'A' ;subtract to update the flags
+  jnae endif ; jump if str is not greater than or equal to 'A'
+  cmp byte[string + rdi], 'z'
+  jnbe endif ; jump if str is not less than or equal to 'z'
+  ; char. is uppercase
+  ; note: the distance between uppercase and lowercase letter ASCII values is always 32
+  add byte[string+rdi], 32
+endif:
+  inc rdi
+  cmp rdi, STRLEN
+  jne   start_do ;loops around
+
+  ;print string
+  mov rax, 1
+  mov rdi, 1
+  mov rsi, string
+  mov rdx, STRLEN
+  syscall
+
+  ; if numbers are unsigned, you can shift the number line (see drawings)
+
+
+Memory Operand
+--------------
+  -str (address of str; basically a pointer, but still a constant)
+  -byte[str] - byte  0 of str (dereferences the pointer)
+  -byte [str+1] - byte 1 of str
+  -byte [str + rdi] - byte #rdi of str
+    -performed at runtime
+  -syntax: [_____________ + __________ + _________ * _________]
+            displacement       base        scale       index
+            (constant)      (register)   (1,2,4,8)   (register)
+   ex: byte[str+1] only has displacement
+   ex: byte[str+rdi] has displacement and base
+
+Looping and Branching
+---------------------
