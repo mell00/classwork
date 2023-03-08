@@ -1,0 +1,246 @@
+Xmm Floating Point
+------------------
+-16 registers: xmm0...xmm15
+  -all are 128-bits in size (size of double qword)
+
+mouss ______, _______
+       dest    src
+(s is for "single")
+-for dword/float
+
+mousd ______, _______
+       dest    src
+(d is for "double" precision of a single)
+-for qword/double
+
+-src and dest can be memory operands ([...]) or xmm registers
+-no mem -> mem moves
+-src cannot be an immediate (a constant)
+
+ex:
+section .text
+  mousd xmm0, 12.7 ;returns error
+
+ex:
+section .data
+  CONST: dq 12.7
+section .text
+  mousd xmm0, qword[CONST] ;correct way to access 12.7
+
+Arithmetic
+----------
+
+-addss _______, ______ ;dest += src (float)
+         dest     src
+-addsd _______, ______ ;dest += src (double)
+         dest     src
+-vaddss _______, ______, ______ ;dest = s1 + s2 (float)
+          dest     s1      s2
+-vaddsd _______, ______, ______ ;dest = s1 + s2 (double)
+          dest     s1      s2
+-subss
+-subsd
+-vsubss
+-vsubsd
+-mulss
+-mulsd
+-vmulss
+-vulsd
+-divss
+-divsd
+-vdivss
+-vdivsd
+
+-sqrtss _______, _______ ;dest = sqrt(src) (float)
+          dest     src
+-rcpss _______, _______ ;dest = 1/src (float)
+          dest     src
+-rsqrt _______, _______ ;dest = 1/sqrt(src) (float)
+          dest     src
+
+Comparisons
+-----------
+-ucomiss _______, _______ ;compare a and b (float)
+            a        b
+-ucomisd _______, _______ ;compare a and b (double)
+            a        b
+  -u stands for unordered
+  -these update ZF and CF (unsigned)
+    -a(bove), b(elow), e(qual), n(ot)e(qual), ae (greater than), be (less than)
+
+Not-A-Number (NaN)
+------------
+-special floating point constant
+-0/0 = NaN
+-inf/inf = NaN
+-0 * inf = NaN
+ex: NaN < 12
+  -ordered comparison: if either a or b is an NaN, program crashes
+  -unordered comparison: automatically true for any expression where a and/or b is an NaN
+-quiet NaN and a signaling NaN
+
+ex:
+double pi()
+{
+  double p = 0.0; //xmm0
+  double s = 1.0; //xmm1
+  double d = 1.0; //xmm2
+  do {
+    p = p + s/d; //xmm15 = s/d
+    s = -1 * s;
+    d = d + 2;
+  } while(d > 0.000001);
+  return 4*p;
+}
+
+
+;;;
+;;; pi_xmm.s
+;;; Computes pi.
+;;;
+section .data
+
+ZERO: dq 0.0
+ONE: dq 1.0
+TWO: dq 2.0
+FOUR: dq 4.0
+NEGONE: dq -1.0
+EPS: dq 0.00001
+
+printf_fmt: db "%f", 10, 0
+
+section .text
+
+extern printf
+global main
+
+main:
+  push rbp
+  mov rbp, rsp
+
+  call pi
+  ; Return value in xmm0
+
+  mov rdi, printf_fmt
+  mov al, 1 ;num of floating pt arguments
+  ; xmm0 is pi
+  call printf
+
+  ; return 0;
+  mov rax, 0
+  pop rbp
+  ret
+
+pi:
+  push rbp
+  mov rbp, rsp
+
+  movsd xmm0, qword[ZERO] ;xmm0 = p = 0.0
+  movsd xmm1, qword[ONE] ;xmm1 = s = +1.0
+  movsd xmm2, qword[ONE] ;xmm2 = d = 1.0
+  movsd xmm11, qword[ONE] ;xmm2 = d = 1.0
+  movsd xmm13, qword [NEGONE] ; xmm13 = -1.0
+  movsd xmm14, qword [TWO] ; xmm13 = 2.0
+  movsd xmm15, qword [EPS] ; xmm13 = 0.00001
+
+  ; xmm12 is a scratch register
+.begin_loop:
+  ; p = p + s/d;
+  vdivsd xmm12, xmm1, xmm2 ;xmm12 = s/d
+  addsd xmm0, xmm12 ;xmm0 += s/d
+
+  ;s = s * -1
+  mulsd xmm1, xmm13 ;xmm1 *= -1
+
+  ;d = d + 2
+  addsd xmm2, xmm14 ;xmm2 += 2
+
+  ;while(1/d > 0.00001)
+  vdivsd xmm12, xmm11, xmm2 ;xmm12 = 1/d
+  ucomisd xmm12, xmm15
+  ja .begin_loop
+
+  mulsd xmm0, qword [FOUR]
+
+  pop rbp
+  ret
+
+
+asm pi_xmm.s
+-the above code is equivalent to:
+  double p = pi();
+  printf("%f\n", p);
+  // where "%f\n" is rdi and p is xmm0
+
+SIMD: Packed Instructions
+-------------------------
+-single-instruction, multiple data
+Packed Operations
+-----------------
+-moups ;floats
+-movpd ;doubles
+-addps ;floats
+-vaddps ;floats
+-addpd ;doubles
+-vaddpd ;doubles
+
+ex:
+in c++:
+void add(float* arr_a, float* arr_b) //arr_a is rdi, arr_b is rsi
+{
+  //arr_a[i] += arr_b[i] for all i
+  for (int i = 0; i < SIZE; ++i)
+    arr_a[i] += arr_b[i];
+}
+
+in assembly language W/O packed operations (scalar):
+add:
+  mov rax, 0 ;array index in words
+.begin:
+  cmp rax, SIZE
+  jge .end
+  mouss xmm0, dword [rdi + 4*rax]
+  mouss xmm1, dword [rsi + 4*rax]
+  addss xmm0, xmm1
+  mouss dword [rdi + 4*rax], xmm0
+  inc rax
+  jmp .begin
+.end:
+  ret
+
+in assembly language with packed operations (vector)
+add:
+  move rax, 0 ;array index in words
+.begin:
+  cmp rax, SIZE
+  jge .end
+  moups xmm0, dword [rdi + 8*rax]
+  moups xmm1, dword [rsi + 8*rax]
+  addps xmm0, xmm1
+  moups dword [rdi + 8*rax], xmm0
+  add rax, 2
+  jmp .begin
+
+Pipelining: Implicit Instruction-Level Parallelism
+--------------------------------------------------
+-MIPS
+  -reduced instruction set; each instruction does exactly one thing
+  -if instructions are simpler, maybe simplicity of instructions
+    will make the program run faster
+  -only two instructions that access memory
+    -lod _______, _______ ;load instruction
+           reg      mem
+    -sto _______, _______ ;stow instruction
+           mem      reg
+  -32 dword-sized registers
+    -r0, r1, ...., r30, r31
+  -execution stages:
+    (1) instruction fetch (IF): loads the next instruction onto the CPU
+      -every instruction is 32-bits
+    (2) instruction decode (ID): the CPU configures itself to run the instruction
+    (3) execute (EX): runs the instruction; if the instruction outputs to a register,
+    that register is NOT modified yet
+      ex: add r0, r1, r2 ;instruction output is written out to r0 at the very last step,
+          and the result is stored in a temporary register until then
+    (4) memory access (MEM): accesses memory (lod and sto apply here)
+    (5) writeback (WB) results are written to registers

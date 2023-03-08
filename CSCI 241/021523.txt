@@ -1,0 +1,84 @@
+Functions
+---------
+-from the C-standard library:
+  -printf("format string",...);
+    -%~ used as placeholders
+      -%d is a 32-bit int, so we will commonly use %ld for 64-bit numbers
+    ex: printf("%d + %d = %d \n", arg_1,arg_2,arg_3)
+        executes printf(arg_1 "+" arg_2 "=" arg_3 "\n")
+    -format string stored in rdi, and arguments stored in rsi, rdx, ...
+  -scanf("format string",...);
+    -... must be pointers
+    ex: int x, y, z;
+    scanf( %d %d %d", &x,&y,&z)
+      //the spaces are important
+      cin >> x >> y >> z;
+
+-calling a C-function
+  *(1) declare the function as "extern"
+  *(2) align the stack (once per function):
+    sub rsp, 8
+    :
+    :
+    add rsp, 8
+    OR
+    push rbp
+    mov rbp,rsp
+    :
+    :
+    pop rbp
+
+    -the goal is for rsp % 16 == 8 in order to be correctly aligned to the stack
+
+  (3) push any caller-preserved reg (r10,r11) in use onto the stack (and maybe realign the stack
+  if it is needed afterwards)
+  *(4) place arguments in the argument registers (rdi, rsi, rdx, rcx, r8, r9)
+  (5) pre-align stack before stack args
+  (6) push stack args in reverse order
+  *(7) call the function (return value in rax)
+  (8) remove stack args + prealign
+      add rsp, ...
+  (9) pop any collar-preserved regs (r10, r11)
+
+  -calling assembly language from C/C++
+    -in your .s file:
+      -declare your function as global
+      ex: global myfunction (rdi, rsi, rax) (signed 64-bit integers)
+    -in your .c/.h file:
+      -write a function prototype (knowing what arguments it takes and what it returns)
+        ex: long myfunction(long rdi_x, long rsi_y);
+              return rax_z (a long 64-bit integer)
+            -functions as the "extern" keyword in assembly, but in .c/.h
+    -in C++, in your .cpp/.hpp file:
+      -write a function prototype:
+        extern "c" {
+          long myfunction(long rdi_x,long rsi_y);
+        } \\designed to avoid mangled names
+
+      ex: char f(char c);
+          int f(int c);
+          void* f(void* c);
+        -mangled names: f_c,f_i,f_up
+        -%define _______ ____________
+              name    expansion
+        ex: set rsi = rbp - 8
+        mov rsi, rbp
+        sub rsi, 8
+
+        can also write it as mov r12, qword[rbp - 8]
+        an example of lea
+    -Load Effective Address
+      ex: mov rsi, rbp
+          sub rsi, 8
+
+          can be written as lea rsi[rbp - 8]
+      -does not need to use memory, but instead does simple math to find the value
+    -conditional move instruction
+      -syntax: cmovCC ______, ______
+                       dest    src
+         -sets dest = src if the condition code CC is satisfied
+         ex:  cmp qword[rbp-8], r12
+              cmovl r12, qword [rbp-8]
+
+Floating Point Numbers
+----------------------

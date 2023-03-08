@@ -1,0 +1,151 @@
+Bitwise Operations
+------------------
+-and _____, _____ ;dest = dest & src
+      dest   src
+-or _____, _____ ;dest = dest | src
+     dest   src
+     -used to set bits
+-xor _____, _____ ;dest = dest ^ src
+      dest   src
+      -used to flip bits
+-andn _____, _____ ;dest = dest &~ src
+       dest   src
+       -used to reset bits
+-not _____ ;dest = ~dest
+      dest
+
+-flags
+  -bitwise operations update the SF, ZF, PF flags (CF and OF only apply to arithmetic operations)
+  -PF (parity flag): 0 if the number of 1-bits in the result is even, 1 if odd
+    -not much use for it
+    ex: 01101010 - PF = 0
+    -bit shifts update CF with the last bit shifted out
+
+Bit Shifts and Rotates
+----------------------
+-a left shift by n units corresponds to multiplication by 2^n
+-right shift types
+  -logical right shift: always shift in 0s
+    -does zero extension (fills high bits with 0s)
+    -correct for unsigned values
+  -arithmetic right shift: shift in copies of the sign bit
+    -fill high bits with copies of sign bit
+    -preserves sign for signed values
+-moving from a smaller to a higher
+-shift instructions
+  -shr _____, _____ ;dest = dest >> amt (logical shift zx)
+        dest   amt
+  -sar _____, _____ ;dest = dest >> amt (arithmetic shift sx)
+        dest   amt
+  -shl _____, _____ ;dest = dest << amt (logical shift zx)
+        dest   amt
+  -sal _____, _____ ;dest = dest << amt (arithmetic shift sx)
+        dest   amt
+  -dest can be any register or memory operand
+  -amt must be either a constant or the cl register
+
+-bit shifts can be used to construct a bitmask
+-fake multiplication
+-rotations
+  -ror _____, _____ ;dest = dest >> amt (logical shift zx)
+        dest   amt
+  -rol _____, _____ ;dest = dest >> amt (arithmetic shift sx)
+        dest   amt
+  -no bits are created or lost in a rotation, rather, they are moved to the left or right
+  -amt must either be a constant or the cl register
+
+
+ex: "random" number generation
+------------------------------
+-linear congruential generator
+  -state = (A * state) % B
+  -doesn't generate enough randomness in the low bits (tend to follow predictable patterns)
+  -mixing function: mixes up the bits in the state value before output, so it looks like
+    there is more randomness than there actually is (like a permutation of the existing bits)
+  ex: SplitMix64
+  uint64_t state = ....: //.... is some hexadecimal constant
+  uint64_t next()
+  {
+    state = state + ....; //.... // % 2^64; this is the state update
+    uint64_t z = state;
+    z = (z ^ (z >> 30)) * ....; mixing function
+    z = (z ^ (z >> 27)) * ....;
+    z = (z ^ (z >> 31))
+    return z;
+  }
+
+
+  in assembly:
+  ;;;
+  ;;; splitmix64.s
+  ;;;
+  section .data
+
+  state: dq 1234567
+  buffer: dq 0
+
+  section .text
+  global _start
+
+
+  _start:
+    push rbp
+    mov rbp, rsp
+
+  .begin_loop:
+    call splitmix64
+    ; rax = random number
+
+    mov qword [buffer], rax
+
+    ; print buffer
+
+    mov rax, 1 ;SYS_WRITE
+    mov rdi, 1 ;STDOUT
+    mov rsi, buffer
+    mov rdx, 8
+    syscall
+
+    jmp .begin_loop
+
+    ; Infinite loop, no escape!
+
+
+splitmix64:
+  push rbp
+  mov rbp, rsp
+
+  ;Update state
+  mov r12, 0x9e3779b97f4a7c15
+  add qword[state], r12
+
+  ;Mixing function
+  mov rax, qword [state]
+
+  mov r12, 0xbf58476d1ce4e5b9
+  mov r13, 0x94d049bd133111eb
+
+  ;z = (z ^ (z >> 30) * r12)
+
+  mov rbx, rax
+  shr rbx, 30 ; rbx = z >> 30
+  xor rax, rbx ; rax = z ^ (z >> 30)
+  mul r12 ; rax = z ^ (z >> 30) * r12
+
+  ;z = (z ^ (z >> 27) * r13)
+
+  mov rbx, rax
+  shr rbx, 27 ; rbx = z >> 27
+  xor rax, rbx ; rax = z ^ (z >> 27)
+  mul r13 ; rax = z ^ (z >> 27) * r12
+
+  ;z = z ^ (z >> 31)
+
+  mov rbx, rax
+  shr rbx, 31 ; rbx = z >> 31
+  xor rax, rbx ; rax = z ^ (z >> 31)
+
+  pop rbp
+  ret
+
+./splitmix64 | RNG_test stdin

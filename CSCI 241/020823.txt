@@ -275,3 +275,13 @@ _start:
   note: to break .while function, you must append .while to _start, because .while is local to start
 
   #ASSIGNMENT 1 is to print out these results
+
+  Functions (C/C++ compatible)
+  ----------------------------
+  -parameters: rdi, rsi, rdx, rcx, r8, r9, ...stack...
+                1    2    3    4    5   6     7
+  -return: rax, and rdx if 8 < size <= 16
+  -collee-preserved: (saved by Calculator)
+    rbx, rbp, r12 - r15
+  -caller-preserved: (destroyed by call)
+    r10, r11

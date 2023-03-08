@@ -1,0 +1,106 @@
+GDB Dashboard
+-------------
+cp /usr/local/class/cs241/.gdbinit ~
+
+Pipelining
+----------
+-overlapping execution of successive instructions
+
+MIPS32
+------
+-execution stages:
+  (1) instruction fetch (IF): loads the next instruction onto the CPU (PC = program counter)
+    -every instruction is 32-bits
+    -load four bytes from whatever address is inside the PC
+  (2) instruction decode (ID): the CPU configures itself to run the instruction
+    -also updates the PC for the following intructions (+4 bytes, unless branch)
+  (3) execute (EX): runs the instruction; if the instruction outputs to a register,
+  that register is NOT modified yet
+    ex: add r0, r1, r2 ;instruction output is written out to r0 at the very last step,
+        and the result is stored in a temporary register until then
+    -for memory instruction (lod and sto), compute effective address
+      ex: lod r1, [addr + r2] ;this is called the effective address
+  (4) memory access (MEM): accesses memory (lod and sto apply here)
+  (5) writeback (WB) results are written to registers
+
+ex: in x86-64,
+  add rax, qword [addr + rbx + 4*rcx]
+    requires bitshift, addition, addition, mem access and addition instructions
+    as opposed to MIPS32, which goes through only the five stages
+
+-execution time:
+  -without pipelining, execution time is 5n
+  -with pipelining, execution time is 4 + n (essentially a 5x increase in execution speed)
+
+-pipelining hazards:
+  -data hazards: an output of one instruction is used as an input for a following instruction
+    ex: add r1, r2, r3
+        sto [addr] r1
+        (the 2nd instruction will need to wait a cycle to use r1)
+  -control hazards: the output of an instruction determines whether a following branch is taken
+    ex: cmp r1, r2
+        beq label
+    -predict not taken
+      -if branch is not taken, then there is no stall and our prediction is correct
+      -if the branch is taken, do a 1 cycle flush and our prodeiction is incorrect
+    -predict taken
+      -minimum 1 cycle stall cycle if true
+      -if the branch is taken, 1 cycle stall (prediction correct)
+      -if branch is not taken, 1 cycle stall (prediction incorrect)
+
+  ex: for (int i = 0; i < sz; ++i) {
+    branch (i < sz) not taken if i < sz
+    when i >= sz, branch is taken
+  }
+
+Bitwise Operations
+------------------
+-bit operations in C/C++:
+  ____ & ____ (bitwise and)
+  ____ | ____ (bitwise or)
+  ____ ^ ____ (bitwise exclusive or/xor)
+  ~ ____ (bitwise not)
+
+-set a particular bit (to 1) using bitwise or
+-test a particular bit using bitwise and
+-reset a particular bit (to 0) by finding the bitwise not mask, then and (andn)
+-flip a bit (0->1,1->0) with bitwise xor
+
+-bitmask: a value which has all bits set to 0, except the bit of interest
+  ex: 000....00100....000
+               ^
+               |
+              ith
+            (1 << i)
+            left shift
+
+      000....01000....000 (is this correct??? please check)
+ex: 00010000 (mask bit 4)
+    set the bit
+
+-bitwise operations in asm:
+  -and _____, _____ ;dest = dest & src
+        dest   src
+  -or _____, _____ ;dest = dest | src
+       dest   src
+  -xor _____, _____ ;dest = dest ^ src
+        dest   src
+  -andn _____, _____ ;dest = dest &~ src
+         dest   src
+  -and _____ ;dest = ~dest
+        dest
+  -all of these update the ZF and the SF (a copy of the high bit)
+  -both operands must be the same size, and not part of memory
+  ex: xor al, al
+  where al 00101001
+        al 00101001
+        -----------
+           00000000 (this is a common trick to zero out a register)
+        instead of mov al, 0 (which adds extra unecessary bits to storage)
+  -bit shifts
+  c++ ex: 0b00101001 << 2 => 0b10100100
+            ^^ these two 0's were shifted left to the end, wrapped around
+      [addr + rax + _____ * rbx]
+                    scale (1, 2, 4, 8; equivalent to shifting by 0, 1, 2, 3)
+      ex: 0b00101001 >> 2 =>
+  -bit rotations

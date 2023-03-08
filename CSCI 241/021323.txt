@@ -1,0 +1,265 @@
+Functions (compatible w/ C\C++ libraries)
+-----------------------------------------
+-leaf function: function without any calls
+-registers:
+  -rax: return value
+  -rbx: callee-preserved
+    ex: function_f ;This is a caller function
+          ;use rbx
+          call function_g
+          ;use rbx
+    ex: function_g ;This is the callee function
+          push rbx ;puts value of rbx onto the stack
+          ....
+          pop rbx ;pulls value of rbx off the stack
+        ret
+  -rdi, rsi, rdx, rcx, r8, r9: first six args
+  -rbp, rsp: reserved for stack (callee preserved)
+  -r10, r11: caller preserved (the function call may overwrite r10, r11 value(s))
+  ex: function_f ;This is a caller function
+        ;use rbx
+        push r10
+        call function_g
+        pop r10
+        ;use rbx
+  ex: function_g ;This is the callee function
+        push rbx ;puts value of rbx onto the stack
+        .... ; can use rbx and r10
+        pop rbx ;pulls value of rbx off the stack
+      ret
+  -r12 through r15: have no other sort of purpose, callee preserved
+
+The Stack
+---------
+-push: puts a register or memory value onto the top of the stack
+syntax: push _________
+            reg/memval
+equivalent to syntax: sub rsp, .... ;size of value
+                      mov [rsp], __________
+                                reg/memval
+-pop: removes a register of memory value from the top of the stack
+syntax: pop _________
+            reg/memval
+equivalent to syntax: mov  __________, [rsp]
+                            reg/memval
+                      add rsp, ...; size of elem
+
+Stack Alignment
+---------------
+-when the program starts, rsp (the top of the stack) is aligned to a multiple of 16
+  (rsp % 16 == 0)
+-before any call instruction, rsp must be aligned to a multiple of 16, plus 8
+  (rsp % 16 == 8)
+  -how can I do this?:
+    -option #1:
+      _start:
+          ;rsp = 256
+          sub rsp, 8 ;equivalent to pushing 8 empty bytes onto the stack to align it
+          :
+          :
+          call _______
+          :
+          :
+          add rsp, 8 ;de-alignment of stack
+          ret
+    -option #2 (rbp - stack base pointer):
+      function:
+          push rbp ;save the value first, which is 8 byte sized
+          mov rbp, rsp ;rsp can move around, but rbp stays the same
+          :
+          :
+          pop rbp ;release the value last
+  -why does rsp % 16 == 8?
+    call ______
+          label
+    : ;<-- return address
+    :
+    -the above function first pushes the return address, then jumps to the label
+
+
+
+
+Stack-Based Arguments
+---------------------
+-if there are more than 6 arguments, arguments 7-n are pushed onto the stack in reverse order
+ex in C++: int f(int a, char* b, char c, long d)
+          eax   edi      rsi       dl      rcx
+another C++ ex: char g(int a, int b, int c, int d, char* e, char* f, int x, int y, long z)
+                        edi     esi   edx   ecx     r8       r9   <----------------- push
+                :
+                : ;register arguments
+                :
+                push qword ... ;z
+                push dword ... ;y
+                push dword ... ;x
+                call g
+                ;return value in al
+
+in assembly:
+g:
+  push rbp
+  mov rbp, rsp
+  :  dword [rbp+16] -> x
+  :  dword [rbp+20] -> y
+  :  qword [rbp+24] -> z
+  pop rbp
+  ret
+-depending on the total size of stack agr, you may need to "pre-align" the stack before you push them
+
+Local Variables
+---------------
+g:
+  push rbp
+  mov rbp, rsp
+  : ; local variables: int x, int y, long z
+  sub rsp, 16
+  : ; [rbp-4] -> x
+  : ; [rbp-8] -> y      <- these work because rsp % 16 == 8
+  : ; [rbp-16] -> z
+  add rsp, 16
+  pop rbp
+  ret
+
+Calling C-Library Functions
+---------------------------
+-entry point is main, not _start
+ex: global main
+      main:
+        :
+-a C-function must be declared as extern
+ex: extern printf
+ex: Basic "Hello, World!" program using C-lib
+  section .data
+  msg: db "Hello, world!", 10, 0 ;<- null terminated
+  ;no need for the length of the string here
+  section .text
+  global main
+  extern printf
+  main:
+    push rbp
+    mov rbp, rsp ;gives stack alignment
+
+    mov rdi, msg
+    call printf
+
+    pop rbp ;stack unalignment
+    mov rax, 0 ;return 0
+    ret
+
+ex: stores and prints grades
+  in C:
+  #include <stdio.h>
+  #include <limits.h>
+
+  int main()
+  {
+    long high = LONG_MIN,
+         low = LONG_MAX;
+    long grade:
+      printf("Enter grades:"); ;information in double quotes needs to always be in .data section
+    do {
+      scanf(" %1d", &grade);
+      if (grade == -1){
+        break;
+      }
+      if (grade > high){
+        high == grade;
+      }
+      if (grade < low){
+        low == grade;
+      }
+    } while (true);
+
+    printf("Highest: %1d\n", high);
+    printf("Lowest: %1d\n", low);
+
+    return 0;
+  }
+
+  skeleton of same program in assembly:
+
+  section .data
+
+  prompt: db "Enter grades: ", 0
+  scanf_fmt: db "% 1d", 0
+  high_msg: db "Highest: %1d", 10, 0
+  low_msg: db "Lowest: %1d", 10, 0
+
+  section .text
+
+  extern printf
+  extern scanf
+
+  global main
+
+  main:
+    push rbp
+    mov rbp, rsp
+
+    sub rsp, 8 ;space for grade
+    sub rsp, 8 ;re-align stack
+    mov rcx, 10000000000000000 ;register for min
+    mov r8, -10000000000000000 ;register for max
+  start_loop:
+    ;scanf(" ld",&grade)
+    mov rdi, scanf_fmt
+    mov rsi, rbp
+    sub rsi, 8 ; rsi = rbp - 8, address of grade
+    call scanf
+
+    cmp qword[rbp - 8], -1 ;if grade = -1, break)
+    je end_loop
+
+    cmp qword [rbp - 8], rcx
+    jnl endif1
+    mov rcx, qword [rbp - 8]
+  endif1:
+    ; if (grade > max), max = grade
+    cmp qword [rbp - 8], r8
+    jng endif2
+    mov r8, qword [rbp - 8]
+  endif2:
+    jmp start_loop
+  end_loop:
+    ; printf("Largest: %ld\n", max);
+    mov rdi, high_mag
+    mov rsi, r8
+    call printf
+    ;printf("Smallest: %ld\n", min)
+    mov rdi, low_msg
+    ;clean up stack
+    add rsp, 16
+    pop rbp
+    mov rax, 0
+    ret
+
+    |           |
+    |           |
+    |           |
+    |           |
+    | saved rbp | <- rsp <-rbp
+    |           |
+    |           |
+    |           |
+    |           |
+
+
+    |           |
+    |           |
+    |           |
+    |           |
+    | saved rbp | <- rbp
+    | (grade)   |
+    |  (unused) | <- rsp
+    |           |
+    |           |
+
+    |           |
+    |           |
+    |           |
+    |           |
+    | saved rbp | <- rbp
+    | (grade)   | <- rbp - 8
+    |  (unused) | <- rsp
+    |           |
+    |           |
