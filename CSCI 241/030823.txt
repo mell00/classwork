@@ -149,3 +149,5 @@ splitmix64:
   ret
 
 ./splitmix64 | RNG_test stdin
+
+xorShiro64 (assignment)

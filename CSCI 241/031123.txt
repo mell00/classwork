@@ -1,0 +1,231 @@
+Structures
+----------
+-ex of struct in C\C++
+  struct thing
+  {
+    double a;
+    char b;
+    int c;
+    char* d;
+  };
+
+  thing t; //allocates memory for all four members
+  t.c = 12; // c = 12
+  cout << sizeof(t) << endl; // 24 bytes
+
+  - offset (location in memory)  |  size (bytes)
+  a              0               |       8
+  b             0+8              |       1
+  padding        9               |       3
+  c              12              |       4
+  d              16              |       8
+  -----------------------------------------------
+                                         24 bytes total
+  Requirements
+  (1) the offset of a member must be a multiple of the member's size
+    -between b and c, the compiler inserts 3 padding bytes to ensure
+    that the offset of c is a multiple of 4
+      -we can add padding bytes before any member to get this
+    -address of a member is the location of struct + the offset
+  (2) the total size of a struct is padded up to a multiple of its largest
+    member's size
+      -sometimes it is possible to rearrange members in such a way that
+        padding is not necessary to meet this requirement
+          -the compiler automatically does this for classes but not structures
+  (3) the address of struct instance must be a multiple of its largest
+    member's size
+      -so, for ex, thing t; //&t is a multiple of 8
+ex:
+struct thing
+{
+  int c;
+  double a;
+  char b;
+  char* d;
+};
+- offset (location in memory)  |  size (bytes)
+c              0               |       4
+padding        4               |       4
+a              8               |       8
+b              16              |       1
+padding        17              |       7
+d              24              |       8
+-----------------------------------------------
+                                       32 bytes total
+
+ex:
+rdi is addr. of a thing (the first example, not the second)
+[rdi + 0] : addr. of a
+[rdi + 8] : addr. of b
+[rdi + 12] : addr. of c
+[rdi + 16] : addr. of d
+
+-accessing elements:
+
+
+-thing in .data
+  section .data
+
+  my_thing:
+    dq 3.14159  ; my_thing.a
+    db 12  ; my_thing.b
+    db 0,0,0  ; padding
+    dd 17  ; my_thing.c
+    dq 0  ; my_thing.d
+
+  -this is equivalent to:
+    thing my_thing {3.14159,12,17,nullptr};
+
+  -accessing elements:
+    [my_thing + 0] : addr. of a
+    [my_thing + 8] : addr. of b
+    [my_thing + 12] : addr. of c
+    [my_thing + 16] : addr. of d
+
+-thing instance on the stack
+  sub rsp, 24  ; size of thing
+  -see sketches
+
+-macros for struct definition
+  struc thing
+    a: resb 8 ; reserve 8 bytes for a, equivalent to a: resq 1
+    b: resb 1
+       resb 3 ; reserve 3 bytes for padding
+    c: resb 4 ; equivalent to c: resd 1
+    d: resb 8
+
+  endstruc
+  ;;; thing_size, a, b, c, d, thing(= 0)
+
+  sub rsp, thing_size ;thing_size is a constant
+  [rsp + a]
+  [rsp + b]
+  [rsp + c]
+  [rsp + d]
+  ;;; where a, b, c, and d are the offsets defined for thing_size
+  [rsp + thing] ; address of the whole thing
+
+  ex:
+  struc thing
+      alignb 8 ;the next variable that comes will be padded by 8
+    a: resb 8
+      alignb 1
+    b: resb 1
+      alignb 4 ; <- adds 3 bytes
+    c: resb 4
+      alignb 8
+    d: resb 8
+  endstruc
+
+thing inst. in data
+--------------------
+section .data
+
+my_thing:
+  istruc thing
+    at a, dq 3.14159
+    at b, db 12 ;;adds correct padding between b and c
+    at c, dd 17
+    at d, dq 0
+  iend
+
+Structures and Functions
+------------------------
+void f(thing t);
+thing g();
+
+in C, structures are passed as pointers
+void f(thing* tp); \\thing* is the addr., so it goes in rdi
+thing* g(); \\thing* goes into rax
+
+-argument registers
+  -rdi, rsi, ..., xmm0, xmm1 (both for floating pt), ...
+-return registers
+  -rax, rdx, xmm0, xmm1
+-rules:
+  (1) if the struct size <= 8 bytes, pass the entire struct in the
+  next arg. register
+  ex: struct small {
+        int x; // 4 bytes
+        char a, b, c, d; // 4 bytes
+      }; // total of 8 bytes
+
+      void f(small s); \\ small s belongs in rdi
+
+      section .data
+      my_small:
+            :
+            :
+      section .text
+            :
+        mov rdi, qword [my_small]
+        call f ; f(my_small)
+  (2) if size > 16 and the first qword is not floating pt, pass on the stack
+    (compatible with 32-bit code because all storage is done on the stack there)
+    ex: struct small {
+          char* a; // 8 bytes
+          int b, c; // 8 bytes (4 + 4)
+          char d; // 1 byte
+          //total size = 24 bits (1 rounds up to 8), with is > 16 and a is not floating pt
+        }
+  (3) if size > 64, pass on the stack
+  (4) if size > 8 but <= 64, rule 3 does not apply, "chop" the struct into qword
+    sized chunks and pass in separate registers
+    ex: struct rule4 {
+          int a; // 4 bytes
+          int b; // 4 bytes, and both ints make up the 1st qword stored in rdi/rsi
+          double d; // 8 bytes, makes up the 2nd qword stored in xmm0/xmm1
+        }; //total size = 16 bytes
+
+        void f(int q, rule4 r);
+
+        section .data
+
+        my_rule4:
+          :
+          :
+
+        section .text
+          :
+          :
+          mov edi, 27 \\ int q
+          mov rsi, qword[my_rule4]
+          movsd xmm0, qword[my_rule4 + 8]
+          call f ;f(27,my_rule4)
+      ex: struct rule4 {
+            int a;
+            int b;
+            double d;
+          };
+
+          rule4 f(int e, int f, rule4 s, double m, double n, int i, int j,
+                int k, long q, long r, double t);
+
+          \\ int e and int f make up first qword, go into edi and esi
+
+          Registers                   xmm         stack
+          ------------------------------------------------------------
+          edi: e
+          esi: f
+          edx: s.a and s.b       xmm0: s.d
+                                 xmm1: m
+                                 xmm2: n
+          ecx: i
+          r8d: j
+          r9d: k
+                                                 stack: r, q (ran out of non-floating pt regs.)
+                                xmm3: t
+
+          -return:
+            rax: .a, .b
+            xmm0: .d
+
+ex: Signals
+
+Signal                 Catchable?          Default Behavior
+------------------------------------------------------------
+SIGINT (Ctrl-C)           Yes             Kill program
+SIGKILL                   No              Kill program
+SIGSEGV                   Yes             Kill program
+SIGFPE                    Yes             Kill program
+SIGWINCH                  Yes             Nothing         (sent anytime size of window changes)
