@@ -1,0 +1,122 @@
+Z80 Assembly
+------------
+-case-insensitive
+-intended to be byte-code compatible with legacy Intel hardware
+  -the assembly code itself is not compatible with Intel compiler
+-primarily 8-bit CPU (16-bit address space)
+-registers:
+  -A, B, C, D, E, F, H, L (all 8-bit registers)
+    -F is the flag register (so don't use it for general purposes)
+  -AF, BC, DE, HL (16-bit registers for operations only, HL being for both operations and memory)
+    -not separate registers, but combination of the 8-bit registers
+  -IX, IY (16-bit index registers for memory operand use only)
+
+  -x86 memory operand: [placement + base + scale * index], where
+    -displacement is a constant
+    -base is a register
+    -scale is either 1, 2, 4, or 8
+    -index is a register
+    -in Z80, index is either IX or IY
+
+  -SP (top of stack pointer)
+  -PC (program counter; points to next instruction)
+  -I (interrupt vector)
+    -one way in which external hardware and communicate with the CPU
+    -an array of pointers
+
+-shadow registers:
+  -a method of speeding up running more than one program at the same time
+  -hidden copies of registers A', B', ... that lives in the CPU
+    -just load one set of registers into one program and a shadow set into another program, then run
+    -can switch between original set and shadow set
+
+-basic syntax:
+  instruction dest, src   ; comment
+
+  ld a, 5 ; a = 5, ld is the Z80 equivalent of mov
+  ld b, 7 ; b = 7
+
+  add a, b ; a = a + b
+
+  ld a, [addr] ; take value at given address and ld it into a
+  **NOTE: there is no 16-bit mov, ld is 8-bit only. The above instruction moves a byte from addr into a**
+
+  ld b, [arr + IX] ; or IY, or HL for the index
+
+  ldi b, [arr + IX] ; load mem value at arr[IX] into b, then auto-increment IX
+
+  jmp label ; unconditional jump
+
+  jp cc, label  ; conditional jump
+  jr cc, label  ; conditional jump
+  - difference between jp and jr is how address is stored
+    -jp is an absolute jump (stores 1 byte for the instruction, and full 16-bit target addr as part of the jmp)
+    -jr is a relative jump (stores 1 byte for the instruction, and 8-bit of target address as part of the jump)
+      -uses less space but takes longer
+
+  djnz label  ; decrements B register, then jumps to the label if B != 0
+    -good for loops
+
+  -condition codes:
+    -c: checks carry flag
+    -nc: not carry
+    -p: positive (check sign flag)
+    -m: negative (not sign flag)
+    -z: zero
+    -nz: non-zero
+    -pe/po: parity even, parity odd
+      ex: 01101011 - PO
+      suppose a bit gets flipped due to corruption: 01111011
+      then PE
+
+    jp P, label ; jump to label if P is positive, otherwise do nothing
+
+-functions:
+  syntax: call func ; pushes ret addr, jmp to func.
+          :
+          :
+          ret ; pop ret addr, jump to it
+    -you need sp register set up beforehand
+          push ; can only push 16-bit values
+          pop ; can only pop 16-bit values
+  -conditional returns:
+    - ret P ; return if positive (check sign flag)
+
+-arithmetic:
+  -all arithmetic operations are 8-bit only
+
+  -add a, b ; a = a + b
+
+   ;bc = bc + de is equivalent to b*2^8 + c + d*2^8 + e = 2^8 (b+d) + (c + e)
+   ; note: here b and d are high bytes, and c and e are low bytes
+   add c, e ; c = c + e
+   adc b, d ; b = b + d + carryover value, adc stands for add with carry
+
+  -same with subtraction
+  -there is no multiplcation/division in Z80
+
+GameBoy Z80
+-----------
+-more variations on ld instruction
+-can use C register in memory operands
+  ex: ld a, [arr + c]
+-swap ___________ ; swap bytes
+      16-bit reg
+-all instructions related to "ports" removed
+-IX, IY registers removed
+  -so C and HL are the only index registers
+-shadow registers removed
+
+-RGBDS: an assembler + other tools targetting the GameBoy (and GBC)
+  -syntax:
+    ld a, $ff ; hexadecimal values start with $
+    ld a, %01101011 ; binary values start with %
+    ld a, `0123 ; 00, 01, 10, 11
+
+-GameBoy screen: 160 x 144 pixel screen
+-memory-mapped I/O
+  -16-bit address space (0 to 65535)
+  -address range        usage
+  -without tilemap: 160 * 144 * 2 / 8 = 5760 B
+  -with tilemap: (160/8) * (144/8) * 8 = 2880 B
+    -uses half of space without tilemap, makes screen drawing faster

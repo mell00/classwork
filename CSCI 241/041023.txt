@@ -1,0 +1,239 @@
+Macros (YASM/NASM)
+------------------
+
+.s ------------------> code -----------> executable
+    macro processing         assembler
+|-------------------------|         |-------------|
+          text                          binary
+
+yasm -e _____.s -o ______.pre shows you what the transformed text of the program looks like
+  -good tool for debugging
+
+-to include another .s file, %include "_____.s"
+  -this line is replaced with everything imported from _____.s
+-single-line macros:
+  -functions as a sort of search and replace; stores a list of replacements that it needs to do
+  ex: %define accum rax
+      add accum, rbx ---> add rax, rbx
+      accum rbx, 12 ---> assembler ERROR! rax rbx, 12
+      %undef accum
+
+  ex: %define sum add accum, 2
+
+  -if macro A is defined in terms of macro B, then A will always use the most recent definition
+   of B
+
+  ex: %define x x+1
+      mov rax, x -> mov rax, x+1 [PREPROCESSOR HALTS HERE] -> mov rax, x+2 -> ... -> mov rax, x+inf
+      -macro preprocessor will catch infinite replacements such as this after 1 replacement (x+1)
+
+  ex: %define x y
+      %define y x
+      x ---> y ---> x [PREPROCESSOR HALTS HERE]
+      {}    {x}    {x,y}
+
+-normal assembly is case-insensitive
+  -mov rax, 10, MOV RAX, 10, Mov Rax, 10 are interchangeable
+-macros are case-sensitive by default
+  -it is possible to define case-insensitive macros
+    %idefine sum  add rax, 1
+    sum ---> add rax, 1
+    sUM ---> add rax, 1
+
+ex: %define x 0
+    mov qword[addr], x ---> mov qword[addr], 0
+
+ex: %define x x+1
+    mov qword[addr], x ---> mov qword[addr], x+1 [PREPROCESSOR HALTS HERE]
+
+ex: %define count inc counter <= out of order defines are allowed BTW
+    %define counter rax
+
+    %xdefine count inc counter
+    %xdefline counter rax
+
+    ;;; count ---> inc counter [PREPROCESSOR HALTS HERE]
+
+-normal macros check for replacements when USED
+  -customization-like behavior
+-x-macros only check for replacements when DEFINED
+  -variable-like behavior
+
+ex: %xdefine i 0
+      i --> 0
+    %xdefine i i+1
+      i --> 0 + 1
+    %xdefine i i+1
+      i --> 0 + 1 + 1
+      .... and so on
+
+%assign i 0
+  i --> 0
+%assign i i+1
+  i --> 0 + 1 --> 1
+%assign i i+1
+  i --> 1 + 1 --> 2
+
+-assign is like an x-macro that does math
+  -uses less memory than x-macros, because it doesn't store data as strings
+
+-macros with parameters:
+  %define increment(r)  add r, 1
+  :
+  increment(rax) --> add r, 1 -------> add rax, 1
+  :                           r -> rax
+  :
+  %define increment(r,x)  add r,x
+  :
+  increment(r11,3) --> add r, x -------> add rll, 3
+  :                               r -> r11
+  :                               x --> 3
+
+  ex: %define counter rax
+      increment(counter) --> add r, 1 -------------> add counter, 1 --> add rax, 1
+                                        r->counter
+
+-multi-line macros:
+  -faster than a function because it doesn't involve jmps, but can bloat your program
+  syntax: %macro macro_name num_of_params
+            instruction %(placeholder for param)
+  -ex: suppose we want a sys_exit macro
+    sys_exit 0
+    (meaning, call SYS_EXIT #60 with exit code = 0)
+
+    %macro sys_exit 1
+      mov rax, 60
+      mov rdi, %1
+      syscall
+    %endmacro
+
+    replaces
+
+    sys_exit 0
+
+    with
+
+    mov rax, 60
+    mov rdi, 0
+    syscall
+
+  -ex: sys_exit macro with 0 parameters
+  %macro sys_exit 0
+    mov rax, 60
+    mov rdi, 0
+    syscall
+  %endmacro
+
+  sys_exit ; 0 parameters
+
+  -ex: can also set defaults for num of parameters
+  %macro sys_exit 0-1 0 ; can accept 0 to 1 parameters, but default is 0
+    mov rax, 60
+    mov rdi, %1
+    syscall
+  %endmacro
+
+  sys_exit ; 0 parameters
+  AND
+  sys_exit 0 ; 1 parameter
+  both work here
+
+  -ex: macros can accept any number of parameters
+
+  fill arr, 1, 7, -2
+
+  |arr|  1  |  7  |  -2  |
+    %1   %2   %3    %4
+
+  should expand into
+
+  mov qword[arr+0], 1
+  mov qword[arr+1],7
+  mov qword[arr+2],-2
+
+  |arr|  1  |  7  |  -2  |
+    %1   %2   %3    %4
+    %rotate 1
+  |  1  |  7  |  -2  |arr|
+    %1    %2     %3    %4
+
+    %0 = 4
+
+  we can do this with the following macro:
+  %macro fill 2 - * ; minimum of 2 params but will accept unlimited params
+    %xdefine target %1  ;define won't pull out array value as it is RIGHT NOW, xdefine will
+    %rotate 1 ;shifts the parameters to the left
+    %xdefine i 0; a counter
+    %rep %0 - 1; macro equivalent of loop
+      mov qword[target + i], %1
+      %rotate 1
+      %assign i i+1
+    %endrep
+    %undef target
+    %undef i
+  %endmacro
+
+  this is how fill arr, 1, 7, -2 expands:
+
+  %xdefine target arr
+  %rotate 1
+  %xdefine i 0
+    mov qword[arr + 0], 1
+    %rotate 1
+    %assign i 1
+    mov qword[arr + 1], 7
+    %rotate 1
+    %assign i 2
+    mov qword[arr + 2], -2
+    %rotate 1
+    %assign i 3
+    :
+    :
+
+-rotation:
+  %rotate n
+  -rotates the parameter list to the left
+  | a | b | c | d |
+   %1  %2   %3  %4
+
+      %rotate 1
+  | b | c | d | a |
+   %1  %2   %3  %4
+
+   where %0 is the number of params.
+
+-repetition:
+  %rep n
+  :
+  :
+  %endrep
+  -emits n copies of the code inside of it
+
+  -can also exit out of loops early with
+  %exitrep
+
+ex: sys_write "Hello, world!", 10
+  and sys_write "Bye!", 10
+
+  section .data
+  str: db "Hello, world!", 10
+  str_len: eq $-str
+
+  section .text
+  mov rax, 1
+  mov rdi, 1
+  mov rsi, str
+  mov rdx, str_len
+
+can be done with the following macro:
+
+  %macro sys_write 1 - *
+    section .data
+      %%str: ....;this is going to be a unique label generated each time the macro is executed
+      %%str_len: equ $-%%str ;same here
+    section .text
+      mov rax, 1
+      mov rdi, 1
+      mov rsi, %%str
+      mov rdx, %%str_len
+  %endmacro

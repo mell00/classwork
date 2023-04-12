@@ -1,0 +1,104 @@
+Caching
+-------
+-von Newmann Architecture
+  -processor
+  -memory for code and data
+  -used by most modern computer systems
+
+-Harvard architecture
+  -processor
+  -code memory
+  -data memory (you can't treat code as data)
+
+-speed of memory:
+  -latency: how much time a single request to the memory system takes to be completed
+  -bandwidth: how much data we can transfer in a single request
+    -for modern processors, usually 64 bytes
+      -if more than that, then the data needs to be broken up into separate requests
+  -throughput: ratio of bandwidth to frequency
+
+-the von Newmann Bottleneck:
+  -we can't get data on the CPU as fast as the CPU can perform computations
+    -the distance between the memory unit and CPU determines how fast it computes,
+    even if it contains a lot of memory
+    -a solution is to make your memory unit as small as possible and as close to
+    the CPU as possible
+  -spatial locality: if your program accesses some address x, it will probably access
+  other addresses near x
+  -temporal locality: if your accesses an address x, it will likely access x again
+  inn the near future
+  -the goal is to speed up the time it takes to access the memory that you need right now,
+  as opposed to all memory
+
+  ex:
+
+  void add_arrays(int* a, int* b, int size)
+  {
+    for (int i = 0; i < size; ++i)
+      a[i] += b[i];
+  }
+
+  \\ spatial locality:
+  \\ a[i] ---> a[i+1]; the first indexing of a predicts the next indexing
+  \\ likewise, b[i] ---> b[i+1]; the first indexing of b predicts the next indexing
+
+  \\ temporal locality:
+  \\ size ---> size; accessing size predicts that the program will probably access size again
+  \\ i ---> i;  accessing i predicts that the program will probably access i again
+  \\ a ---> a;  accessing a predicts that the program will probably access a again
+  \\ b ---> b;  accessing b predicts that the program will probably access b again
+  \\ to make the program faster, you just need to speed up the access of size, i, a, and b ONLY
+
+-cache: a faster copy of some part(s) of main memory
+  -cache hit: the address being accessed is already in the cache, which will be used
+    -faster
+  -cache miss: the address being accessed is not in the cache, so the program needs to look for it in main memory
+    -copy addr and a range around it into cache
+    -slower, but faster in the future because the address is now in the cache
+
+-cache organization:
+  -line size: how big of a chunk of main memory the memory unit is able to hold at a time
+  -organized into sets of lines
+  -total size = line size * number of sets * lines per set
+  -1 set: fully associative
+  -1 line/set: set associative
+  -when a memory access occurs:
+    mov rax, qword [addr]
+
+    (1) divide address by line size ---> result is a frame
+    (2) set # = frame % number of sets
+    (3) if frame exists in a given set #..
+      (a) yes: cache hit
+      (b) no: cache miss, load frame into set
+    (see OneNote for example)
+
+-measuring cache speedup:
+  -average mean access time: hit % * hit time (how long it takes to access stuff in cache) + (1 - hit %) * miss time (how long it takes to access stuff not in cache)
+    ex: 90% hits, hit time of 1 ns, miss time of 100 ns
+        average mean access time: (0.9)(1) + (0.1)(100) = 0.9 + 10 = 10.9 ns
+
+-multi-level caching (L1, L2, L3, ...):
+ -see diagrams in OneNote
+ -average memory access time: L1 hit % * L1 hit time + (1 - L1 hit %) * L1 miss time
+ -L1 miss time: L2 hit % * L2 hit time + (1 - L2 hit %) * L2 miss time
+ and so on and so forth
+ ex: average memory access time: (0.7 * 1 ns) + (1 - 0.7)(0.8 * 10 ns) + (1 - 0.8)(0.9 * 100 ns) + (1 - 0.9)(1 * 1000 ns)
+                                  = 122 ns
+
+Assignment: simulate a 3-level, fully assoc. cache
+- not an assembly assignment
+
+L1 cache: 1 set, 4 lines, line size of 256 B
+hit time: 1 cycle
+
+L2 cache: 1 set, 64 lines, line size of 1 kB (1024 B)
+hit time: 10 cycles (not cumulative over L1 and L2)
+
+L3 cache: 1 set, 256 lines, line size of 4 kB (4096 B)
+hit time: 100 cycles
+
+main memory hit time: 1000 cycles
+-just keep track of range of addresses (maybe just starting addresses) and age of each time
+  -can be an array of line structs with address and age member variables
+
+total # of cycles: 3471

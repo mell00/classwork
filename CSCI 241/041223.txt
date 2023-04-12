@@ -1,0 +1,193 @@
+Multi-Line Macros
+-----------------
+%macro ________ _________ _________________
+         name    # params  defined params
+  :
+  :
+%endmacro
+
+
+-macro parameters:
+  -number of parameters:
+    -single number
+      ex: 3 (%1, %2, %3)
+    -range (with defaults)
+      ex: 2-5 (requires 3 defaults; %1, %2, %3, %4, %5)
+    -unlimited
+      ex: 2-* (2 to unlimited) (%1, %2, %rotate for the rest, %0 for the actual parameter count)
+      ex: %macro f 2-*
+          f rax, rbx
+          here, %1 is rax, %2 is rbx, and %0 = 2
+
+      ex: %macro f 2-*
+          f rax, rbx, rcx, rdx
+          here, %1 is rax, %2 is rbx, and %0 = 4
+    -"rest" parameter
+      ex: 2+ (%1 is for 1st param, %2 is for all the "rest")
+
+ex: %macro f 3
+    f rax, rbx, 2
+    here, %1 is rax, %2 is rbx, and %3 is 2
+
+ex: %macro f 1-3 a b
+    f rax ;, a, b
+    here, %1 is rax, %2 is a, and %3 is b
+
+    OR
+
+    f rax, rbx;, b
+    here, %1 is rax, %2 is rbx, and %3 is b
+
+    OR
+    f rax, rbx, rcx
+    here, %1 is rax, %2 is rbx, and %3 is rcx
+
+
+ex: %macro f 2+
+    f rax, rbx
+    here, %1 is rax, %2 is rbx
+
+ex: %macro f 2+
+    f rax, rbx, rcx, rdx
+    here, %1 is rax, %2 is rbx, rcx, rdx
+
+ex: sys_write "Hello", "world!", 10 as a rest parameter (%1)
+    %macro sys_write 1+
+      section .data
+        %%str: %1   ;macro-local label (generates a unique label)
+        %%str_len: equ $-%%str
+      section .text
+        mov rax, 1
+        mov rdi, 1
+        mov rsi, %%str
+        mov rdx, %%str_len
+        syscall
+    %endmacro
+
+    section .text
+
+    global _start
+    _start:
+
+      sys_write "Hello, world!", 10
+
+-in GameBoy assembly:
+  ret z ;return if zero flag = 1
+
+-in x86:
+    jnz .no_return
+    ret
+  .no_return:
+
+  -can replicate GameBoy assembly ret z by overloading x86 using a macro
+    %macro ret 1
+
+    - ret ---> instruction
+    - ret z ---> macro
+
+    ex: imul rbx ; rax = rax * rbx
+    ex: imul rbx, rcx ; rbx = rbx * rcx
+    ex: imul rbx, rcx, r11 ; rbx = rcx * r11
+    ex: mul rbx ; rax = rax * rbx
+
+    %macro ret 1
+      j%-1  %%no_return; %-1 gives negation of condition code in %1
+      ret
+    %%no_return:
+    %%endmacro
+
+-ARM assembly:
+  if z, mov rax, rbx
+  here, %1 is z and %2 is mov rax, rbx
+
+  is equivalent to
+
+%macro if 2+
+  jnz-1 .no_instr
+  %2
+  .no_instr:
+%endmacro
+  here, %1 is jnz and %2 is mov rax, rbx
+
+  section .text
+
+  global _start
+  _start:
+    if nl, ret
+    if , mov rax, 12
+
+
+ex: movss xx1 2.7 is illegal
+  on the other hand, we can create a macro such that:
+  movssi xmm1, 2.7
+
+%macro movssi 2
+  section .data
+  %%const: dd %2
+  section .text
+  movss %1, [%%const]
+%endmacro
+
+section .data
+  const: dd 2.7
+
+section .text
+  movss xmm4, [const]
+
+ex: IF/ENDIF macro pair
+  IF rax, l, rbx  ;expands into cmp rax, rbx, where %1 is rax and %2 is rbx
+    :
+    :
+  ENDIF
+
+  where %1 is rax, %2 is 1, and %3 is rbx
+
+-the context-stack and context-local labels
+  -the macro system maintains a stack of symbols called the contaxt stack
+   %push _______ ; push symbol onto the context stack
+   %ifctx ________ ; check if the top == symbol
+   %pop _______ ; pop top symbol off of context stack
+
+   IF rax, l, rbx  ;expands into cmp rax, rbx, where %1 is rax and %2 is rbx
+     :
+     :
+   ENDIF
+   - here, top of context stack == IF
+
+   %$ _______ : context-local label
+
+   ex:
+   %macro IF 3
+    %push IF
+    cmp %1, %3
+    j%-2 %$endif
+   %endmacro
+
+   %macro ELSE 0
+    %ifctx IF
+      jmp %$endif
+      %$else:
+    %else
+      %error ELSE without IF
+   %endmacro
+
+   %macro ENDIF 0
+    %ifctx IF
+      %$endif:
+      %pop
+    %else
+      %error ENDIF without preceding IF
+   %endmacro
+
+   section .text
+
+   global _start
+   _start:
+
+   mov rax, 0
+   IF rbx, 1, rax
+    IF r12, e, r11
+      mov rcx, 0
+    ENDIF
+   ENDIF
+   mov rdx, 0
