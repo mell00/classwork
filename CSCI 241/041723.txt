@@ -1,0 +1,246 @@
+Midterm Review
+--------------
+
+parallelogram.s
+
+section .data
+
+newline db 10
+star: db '*'
+space: db ' '
+
+section .text
+
+global _start
+_start:
+  mov rdi, 5
+  call print_stars
+
+  mov rax, 60
+  mov rdi, 0
+  syscall
+
+print_stars:
+  ; rdi = size
+  ; r12 = row number
+  ; r13 = ineer-loops variable
+
+  mov r12, rdi
+.outer_loop:
+  cmp r12, 0
+  je .end_outer_loop
+
+  mov r13, r12
+  dec r13  ; r13 = r12 - 1, num. of spaces
+
+.inner_loop_space:
+  cmp r13, 0
+  je .end_inner_loop_space
+  mov rax, 1
+  mov rdi, 1
+  mov rsi, space
+  mov rdx, 1
+  syscall
+
+  dec r13
+  jmp .inner_loop_space
+
+
+  dec r12
+  jmp .outer_loop
+
+.inner_loop_stars:
+  cmp r13, 0
+  je .end_inner_loop_stars
+
+  mov rax, 1
+  mov rdi, 1
+  mov rsi, star
+  mov rdx, 1
+
+  dec r13
+  jmp .inner_loop_stars
+
+.end_inner_loop_stars
+  dec r12
+
+
+.end_outer_loop:
+
+  ret
+
+
+
+section .data
+
+equal: dq   -1, -2, -3, +3, +3, 0
+equal_len:  equ ($-equal) / 8
+
+nequal: dq   -1, -2, -3, +3, +3, -4
+nequal_len:  equ ($-nequal) / 8
+
+section .text
+
+global _start
+_start:
+  mov rdi, equal
+  mov rsi, equal_len
+  call sums_equal
+  ; result (0,1) in rax
+
+  ;sys_exit with exit code = result
+  mov rdi, RAX
+  mov rax, 60
+  syscall
+
+sums_equal:
+  ; Loop over array
+  ; r12 = positive sum
+  ; r13 = negative sum
+  mov r12, 0
+  mov r13, 0
+.begin_loop:
+  cmp rsi, 0
+  je .end_loop
+
+  cmp qword[rsi], 0
+  jl .less_than
+  ; >= 0, add to r12
+.greater_or_equal:
+  add r12, qword[rdi]
+  jmp .end_if
+.less_than:
+  add r13, qword[rdi]
+.end_if:
+
+  dec rsi
+  add rdi, 8
+  jmp .begin_loop
+.end_loop:
+  add r12, r13
+  cmp r12, 0
+  sete al ; set al = 0 if r12 == 0
+
+  ret
+
+
+String (Array) Instructions
+---------------------------
+-general rules is that any single instruction cannot have multiple memory operands
+  -when you have more than one memory operand in an instruction, the part of the CPU can't load enough memory for the instruction
+-data-moving instructions:
+  -replace * with b for byte, w for word, d for dword, or q for qword
+  -lods*
+    -lodsb:
+      -equivalent to:
+        mov al, byte [rsi]
+        inc rsi
+    -lodsd:
+      -equivalent to:
+        mov eax, dword[rsi]
+        add rsi, 4
+  -stos*
+    -opposite of lods*
+    -stosb:
+      -equivalent to:
+        mov byte[rdi], al
+        inc rdi
+  -movs*
+    -movsb:
+      -equivalent to:
+        mov byte[rdi], byte[rsi]
+        inc rdi (inc doesn't affect the flags)
+        inc rsi (inc doesn't affect the flags)
+
+-data-comparing instructions:
+  -replace * with b for byte, w for word, d for dword, or q for qword
+  -scas*
+    -no operands: scasb
+      -reads from [rsi], write to [rdi]
+        -auto-increment rsi or rdi after either is used (1 for b, 2 for w, 4 for d, 8 for q)
+    -scasb:
+      -equivalent to:
+        cmp al, byte[rdi] (flags are updated based on al, not byte[rdi])
+        inc rdi
+  -cmps*
+    -cmpsb:
+      -equivalent to:
+        cmp byte[rsi], byte[rdi]
+        inc rdi
+        inc rsi
+  -direction flag (DF)
+    -by default, the string instructions will auto increment
+    -however, if the direction flag (DF) flag is set, they will decrement
+    -how to set and clear the direction flag:
+      std  ; set DF == 1
+      cld  ; clear DF == 0
+    -useful for traversing an address at the end of a string or array
+
+  ex: strlen:
+        ; rdi = addr. of string
+        ; save start addr.
+        mov rsi, rdi
+        mov al, 0
+      .begin:
+        scasb
+        je .end_loop
+        jmp .begin
+      .end_loop:
+        ; rdi is 1 past '\0', we need to move it back to find the right spot
+        dec rdi
+        sub rdi, rsi ; result is the strlen
+        mov rax, rdi
+        ret
+
+  ex: memcpy:
+        ; rdi = dest addr.
+        ; rsi = src addr.
+        ; rdx = # of bytes to copy
+      .begin_loop:
+        cmp rdx, 0
+        je .end_loop
+        movsb ; moves byte from [rsi] to [rdi], then increments both
+        dec rdx
+        jmp .begin_loop
+      .end_loop:
+        ret
+
+  -repetition prefixes:
+    -rep: repeat rcx many times (can be applied to lods*, stos*, and movs*)
+    -repe: repeat as long as comparison is equal, or rcx many times, whichever
+     comes first (can be applied to scas* and cmps*)
+    -repne: repeat as long as comparison is not equal, at most rcx times, whichever
+     comes first (can be applied to scas* and cmps*)
+
+     ex: (simplified) memcpy:
+          mov rcx, rdx
+          rep movsb
+          ret
+
+     ex: strlen:
+          mov rsi, rdi
+          mov al, 0
+          mov rcx, -1
+          repne scasb
+          sub rdi, rsi
+          mov rax, rdi
+
+     ex: memset: ;fill a region of memory with a number of copies of a value
+          ; rdi = start addr.
+          ; rsi = # of bytes
+          ; dl = byte to write
+          mov al, dl
+        .begin_loop:
+          cmp rsi, 0
+          je .end_loop
+          stosb ; write value in al into rdi, then increments rsi
+          dec rsi
+          jmp .begin_loop
+        .end_loop
+          ret
+
+    ex: (simplified) memset:
+                      mov al, dl
+                      mov rcx, rsi
+                      rep stosb
+                      ret

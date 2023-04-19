@@ -191,3 +191,60 @@ ex: IF/ENDIF macro pair
     ENDIF
    ENDIF
    mov rdx, 0
+
+   ex: more complicated conditionals
+
+   %macro IF 3
+    %push IF
+    %assign %$else_count 0
+    :
+    :
+    %assign %$else
+   %endmacro
+
+   -do-while loop:
+
+    %macro BEGIN_DO 0
+      %$push DO
+      %$begin_loop:
+    %endmacro
+
+    %macro END_DO 3
+      %ifctx DO
+        cmp %1, %3
+        j%2 %$begin_loop
+        %$end_loop:
+        %pop
+      %else
+        %error END_DO without BEGIN_DO
+      %endif
+    %endmacro
+
+    -break and continue:
+
+    %macro BREAK 0
+      jmp %$end_loop
+    %endmacro
+
+     %macro CONTINUE 0
+      jmp %$begin_loop
+     %endmacro
+
+     -while loop:
+
+     %macro WHILE 3
+      %push WHILE
+      %$begin_loop:
+      cmp %1, %3
+      j%-2 %$end_loop
+     %endmacro
+
+     %macro END_WHILE 0
+      %ifctx WHILE
+        jmp %$begin_loop
+        %$end_loop
+        %pop
+      %else
+        %error END_WHILE without without WHILE
+      %endif
+     %endmacro
