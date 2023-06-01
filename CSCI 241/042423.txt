@@ -1,0 +1,30 @@
+MIPS Intruction Formats
+-----------------------
+
+Assignment - Decoding MIPS
+--------------------------
+
+ifstream file("mips.bin", ifstream::in / ifstream::binary);
+char dat[4];
+uint32_t instruction;
+
+while(file.read(dat, 4)){
+  //Reverse byte order...
+  swap(dat[0],dat[3]);
+  swap(dat[1],dat[2]);
+  instruction = *(uint32_t*)(dat); //immediate deference the pointer here
+  :
+  :
+  //then break down the 32 bytes into the different instruction formats according to the
+  high 6 bits
+
+  int opcode = (instruction >> 26) & 0b111111
+  //if, else statements to determine r-/i-/j-format
+  int rs = (instruction >> 21) & 0b11111; // separate rs from opcode and clear out the rest
+  :
+  :
+  print
+
+} \\where char* is an "array" of 4 chars
+
+note: last three instructions should return as no ops

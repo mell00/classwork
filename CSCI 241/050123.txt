@@ -1,0 +1,110 @@
+Memory Management
+-----------------
+-logical addresses: addresses as seen by processes
+|
+| memory management unit + operating system
+v
+-physical addresses: addresses on the memory hardware
+
+-flat memory:
+  -physical address = logical address (ie. no translation)
+  -the lowest power CPUs can do this (like Arduino)
+  -can only run one program at a time, or multiple programs compiled into one
+  -implies that there is no protection (a bug in one program can corrupt another one)
+-relocation register (RR):
+  -per-process register added to every logical address
+  -physical address = logical address + RR
+
+  for instance, (see notes)
+
+-relocation register with limit:
+  -two components:
+      -RR.base: base address
+      -RR.limit: allowed size
+
+    -if logical address < RR.limit, physical address = logical address + RR.base
+    -else, trap (caught by OS as segmentation error)
+  -the above processes happen for EACH instruction
+
+-partitioning (on the OS side):
+  -how the OS tracks used/not-used memory
+    -sorted by ascending address
+    ex:
+    (assuming that memory upper limit is 0x9000)
+    In use: 0x1000 - 0x3000
+            0x4000 - 0x6000
+            0x6000 - 0x8000
+    Holes:  0x0 - 0x1000
+            0x3000 - 0x4000
+            0x8000 - 0x9000
+
+    when process 0 (0x4000 - 0x6000) ends, the address(es) are removed from "in-use" and put into "holes"
+
+    In use: 0x1000 - 0x3000
+            0x6000 - 0x8000
+    Holes:  0x0 - 0x1000
+            0x3000 - 0x4000 *
+            0x4000 - 0x6000 *
+            0x8000 - 0x9000
+
+    -eager coallesce: collapsing adjacent holes on process exit
+
+    In use: 0x1000 - 0x3000
+            0x6000 - 0x8000
+    Holes:  0x0 - 0x1000
+            0x3000 - 0x6000 *
+            0x8000 - 0x9000
+
+    suppose now that process 3 (with limit = 0x1000) begins
+
+    -which hole to pick?:
+      -first fit: use the first hole that fits (use hole 0)
+      -best-fit: use the best fitting hole (use hole 0 or 2)
+      -worst-fit: use the worst fitting hole (use hole 1)
+        -reduces incidence of memory fragmentation because big holes are taken up first
+
+      In use: 0x1000 - 0x3000
+              0x6000 - 0x8000
+      Holes:  0x0 - 0x1000 (hole 0)
+              0x3000 - 0x6000 (hole 1)
+              0x8000 - 0x9000 (hole 2)
+    -defragmentation of memory: its possible to pause certain processes and copy them from one
+      place in memory to another, to reduce number and size of holes at the expense of performance
+-x86 segmentation:
+  -give each "section" of a process its own relocation register
+  -code segment (cs):
+  -data segment (ds):
+  -stack segment (ss):
+  -extra segment (es):
+  -fs and gs are general purpose segments
+  -physical address = logical address + segment*16
+
+  ex: jmp label ; uses code seg: cs:label
+  ex: mov eax, dword[addr] ; uses data seg: ds:addr
+  ex: movsb ; [es:rsi] --> [es:rdi]
+  -using segment override:
+    ex: jmp fs:label ; sets cs = fs, jmp label
+    ex: mov eax, dword[gs:addr]
+
+  Paging
+  ------
+  -on x86, default page size is 4 kB (0x1000)
+  -in logical memory, each 4kB chunk is called a page
+  -in physical memory, each 4kB chunk is called a frame
+  -each process has a page table, which maps page #s to frame #s
+
+  Segmentation + Paging
+  ---------------------
+  -segmentation address --segmentation--> linear address --paging--> physical address
+  -translation lookaside buffer (TLB): a special cache for page -> frame mappings,
+  specifically the memory accesses for starting address of frame for determination of physical address
+
+  Multi-Level Paging
+  ------------------
+  -multiple page tables with "higher" tables choosing one of several "lower" tables
+
+  Variable Page Sizes
+  -------------------
+  -on x86, a normal page is 4kB
+  -a "huge" page is 1MB
+  -set up a page table as part of booting to 32-bit or 64-bit mode

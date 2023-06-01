@@ -1,0 +1,319 @@
+Two-Stage Bootloader
+--------------------
+
+-loading data from disk -> memory
+  -extended disk read
+    -can handle really big disks
+    -interrupt 0x13, subfunction ah = 0 : reset disk
+      -when you turn your computer on, the computer may power down the disks
+      -drive reboots to make sure the data on the disk is available for use
+    -interrupt 0x13, subfunction ah = 0x42 : extended disk read
+    - struct disk_addr_packet // describes where data is on disk, how much memory it takes up, and where it needs to be moved
+      {
+        unsigned char sz = 16; // 16-bits
+        unsigned char res = 0;
+        unsigned short blk_cnt; // how many blocks we want to load off of the disk; determined in assembler divided by 512
+        unsigned int addr; // 32-bits; where the blocks need to be stored; 7c00 + 512 (one block beyond current address)
+        unsigned int blk; // 32-bits; starting block is always block 1
+      }
+
+;;;
+;;; hello-2s.s
+;;; Two-stage bootloader
+;;;
+bits 16
+org 0x7c00
+
+; stage 1
+;----------------------------------------------------
+
+  ; reset disk
+  mov ah, 0x0   ;subfunction 0 = reset disk
+  mov dl, 0x80  ;disk number 0x80 = disk 0
+  int 0x13 ;ensures that disk is ready for extended disk read
+
+  ; extended disk read
+  mov ah, 0x42  ;subfunction 0x42, ext disk read
+  mov dl, 0x80  ;disk number
+  mov si, disk_pkt ;addr. of disk packet
+  int 0x13
+
+  jmp begin_stage2
+
+; stage 1 "data" section
+;-------------------------------------------------------
+
+disk_pkt:
+  db 16 ;packet size = 16
+  db 0 ;reserved = 0
+  dw blk_count ;block count to load
+  dd begin_stage2 ;addr to load at
+  dd 1         ;starting block 1
+
+; finish MBR
+;-------------------------------------------------------
+
+;pad with 0's
+times 510 - ($ - $$)  db 0
+
+;signature bytes
+dw 0xaa55
+
+; stage 2
+;--------------------------------------------------------
+begin_stage2:
+
+  ;set text-mode
+  mov ah, 0x0  ;subfunction 0 = set
+  mov al, 0x3  ;mode 3 = 80x25 text mode
+  int 0x10
+
+  ;copy string from stage 2 data section --> VRAM
+
+  mov ax, 0xb8000 / 16 ;the segment calculation will multiply by 16 and cancel this out
+  mov fs, ax ;using fs as a segment
+
+  mov bx, 0 ;string index
+  mov si, 0 ;VRAM index
+begin_loop:
+  mov al, byte [msg + bx]
+  cmp al, 0
+  je done
+
+  mov byte [fs:si], al ; character byte
+  mov byte [fs:si + 1], 0x0f ; trailing attribute byte
+
+  inc bx
+  add si, 2
+  jmp begin_loop
+
+done:
+
+forever:
+  jmp forever
+
+;stage 2 "data" section
+;--------------------------------------------------------
+
+msg: db "Hello, world!", 0
+
+;add extra padding
+times 10000 db 0
+
+;$ is current address, add 512 - 1 to ensure that partial block is rounded up
+blk_count: equ ($ - begin_stage2 + 511) / 512
+
+
+
+
+Switching to 32-Bit Protected Mode
+----------------------------------
+-protected means that one program is not allowed to use memory used by another program
+  -can kill programs that violate its memory array bounds
+(1) disable the interrupts (which are not compatible with 32-bit mode)
+
+    cli ; clears IF flag, which is 1 by default if interrupts are enabled and 0 if disabled
+
+    -disables the maskable interrupts, but not the non-masked interrupts
+      -maskable interrupts are the ones that have code behind them
+(2) enable the A20 line
+    -enables a 20th address line, 21 lines overall, which doubles the address space
+    (1) check if its already enabled
+    (2) BIOS int 0x15, subfunction ax = 0x2401 (should be done BEFORE disabling interrupts)
+    (3) Fast A20 (the method used in this class):
+      in al, 0x92 ;read 1 byte from port 0x92
+      or al, 2 ;set bit 1
+      out 0x92, al ;write to port 0x92
+    (4) talk to keyboard controller (accessible via certain ports)
+
+(3) load the Global Descriptor Table (Segments)
+    -theyll all start at address 0 and extend to the end of memory
+    -in 16-bit mode, the values in the segment registers are just multiplied by 16 and added to the address register
+      -physical address = segment * 16 + logical address
+    -in 32-bit mode, the segment registers are indexes into an array (the GDT) that describes the different segments
+      -physical address = GDT[segment].Base + logical address
+      -each element of the array is a structure that describes the segment (known as a segment descriptor)
+(4) switch with to protected mode by setting bit 0 of cr0, then jmp into a 32-bit code segment
+
+
+;;;
+;;; hello-32.s
+;;; Two-stage bootloader
+;;;
+bits 16
+org 0x7c00
+
+; stage 1
+;----------------------------------------------------
+
+  ; reset disk
+  mov ah, 0x0   ;subfunction 0 = reset disk
+  mov dl, 0x80  ;disk number 0x80 = disk 0
+  int 0x13 ;ensures that disk is ready for extended disk read
+
+  ; extended disk read
+  mov ah, 0x42  ;subfunction 0x42, ext disk read
+  mov dl, 0x80  ;disk number
+  mov si, disk_pkt ;addr. of disk packet
+  int 0x13
+
+  jmp begin_stage2
+
+; stage 1 "data" section
+;-------------------------------------------------------
+
+disk_pkt:
+  db 16 ;packet size = 16
+  db 0 ;reserved = 0
+  dw blk_count ;block count to load
+  dd begin_stage2 ;addr to load at
+  dd 1         ;starting block 1
+
+; finish MBR
+;-------------------------------------------------------
+
+;pad with 0's
+times 510 - ($ - $$)  db 0
+
+;signature bytes
+dw 0xaa55
+
+; stage 2
+;--------------------------------------------------------
+begin_stage2:
+
+  ;set text-mode
+  mov ah, 0x0  ;subfunction 0 = set
+  mov al, 0x3  ;mode 3 = 80x25 text mode
+  int 0x10
+
+  ;copy string from stage 2 data section --> VRAM
+
+  mov ax, 0xb8000 / 16 ;the segment calculation will multiply by 16 and cancel this out
+  mov fs, ax ;using fs as a segment
+
+  mov bx, 0 ;string index
+  mov si, 0 ;VRAM index
+begin_loop:
+  mov al, byte [msg + bx]
+  cmp al, 0
+  je done
+
+  mov byte [fs:si], al ; character byte
+  mov byte [fs:si + 1], 0x0d ; trailing attribute byte
+
+  inc bx
+  add si, 2
+  jmp begin_loop
+
+done2:
+
+;begin 16 -> 32 switch
+;--------------------------------------------------------
+
+  ;1. disable interrupts
+  cli
+
+  ;2. enable A20 line
+  ;Fast A20 method: set bit 1 of port 0x92
+  in al, 0x92
+  or al, 2 ;2^1
+  out 0x92, al
+
+  ;3. load GDT
+  mov ax, 0
+  mov ds, ax ;sets data segment to begin at beginning of memory (0)
+  lgdt [gdtr_struct] ;loads gdt structure
+
+  ;4a. switch to protected mode
+  mov eax, cr0
+  or eax, 1 ;set bit 0
+  mov cr0, eax
+
+  ;Flush pipeline (the pipeline has already loaded NON-protected mode instructions already, so we need to flush them by jumping over them)
+  jmp flush_pipeline
+  nop
+  nop
+flush_pipeline:
+
+  ;4b. switch to 32-bit code segment so that we can run 32-bit code
+  jmp code_seg:protected_mode  ; this is a segment override
+
+bits 32
+protected_mode:
+
+  ;setup video segment
+  mov ax, video_seg ;the segment calculation will multiply by 16 and cancel this out
+  mov fs, ax ;using fs as a segment
+
+  mov bx, 0 ;string index
+  mov si, 80*2 ;VRAM index
+begin_loop:
+  mov al, byte [msg + bx]
+  cmp al, 0
+  je done
+
+  mov byte [fs:si], al ; character byte
+  mov byte [fs:si + 1], 0x0f ; trailing attribute byte
+
+  inc bx
+  add si, 2
+  jmp begin_loop2
+
+forever:
+  jmp forever
+
+;stage 2 "data" section
+;--------------------------------------------------------
+
+msg: db "Hello, world!", 0
+
+;global descriptor table
+gdt_array:
+  ;entry 0: reserved, must be 0
+  dq 0
+
+code_seg:   equ  $ - gdt_array ;how far away from the beginning of the array
+  dw 0xffff ;segment limit (biggest 16-bit value possible)
+  dw 0 ;segment base (= 0)
+  db 0
+  ;flags
+  ;Present, Priv(2), Res, Exec (most important flag but should not be enabled for stack segments)? Expand Down?, RW?, Access
+  db 10011010b
+  ;Gran., 32/16, Long, unused, Limit high (4)
+  db 11001111b
+  db 0 ;segment base high (= 0)
+
+data_seg:   equ  $ - gdt_array ;how far away from the beginning of the array
+  dw 0xffff ;segment limit (biggest 16-bit value possible)
+  dw 0 ;segment base (= 0)
+  db 0
+  ;flags
+  ;Present, Priv(2), Res, Exec? Expand Down?, RW?, Access
+  db 10010010b ;note: NO EXEC!
+  ;Gran., 32/16, Long, unused, Limit high (4)
+  db 11001111b
+  db 0 ;segment base high (= 0)
+
+video_seg:   equ  $ - gdt_array ;how far away from the beginning of the array
+  dw 0xffff ;segment limit (biggest 16-bit value possible)
+  dw 0x8000 ;segment base (= 0x0b8000)
+  db 0x0b   ;segment base mid.
+  ;flags
+  ;Present, Priv(2), Res, Exec? Expand Down?, RW?, Access
+  db 10010010b ;note: NO EXEC!
+  ;Gran., 32/16, Long, unused, Limit high (4)
+  db 11001111b
+  db 0 ;segment base high
+
+gdt_size: equ $ - gdt_array
+
+gdt_struct:
+  dw gdt_size
+  dd gdt_array
+
+;add extra padding
+times 10000 db 0
+
+;$ is current address, add 512 - 1 to ensure that partial block is rounded up
+blk_count: equ ($ - begin_stage2 + 511) / 512

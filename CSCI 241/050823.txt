@@ -1,0 +1,105 @@
+Boot Process
+------------
+-EFI system (newer)
+  -C library
+
+-MBR system (older, legacy)
+  -Assembly
+
+MBR (Master Boot Record)
+------------------------
+-on any bootable disk, the first block (512 bytes) is the Master Boot Record
+-contains code run on startup as well as data about how the disk runs
+-structure:
+  -0 to 439 bytes: bootloader code
+  -440 to 443 bytes: disk ID (also can be found with serial number)
+  -444 to 445 bytes: 0s
+  -446 to 461 bytes: partition #0
+    -each drive can have multiple partitions
+  -462 to 477 bytes: partition #1
+  :
+  :
+  -510 to 511 bytes: signature bytes, 0xaa55
+    -if equal to 0xaa55, then the drive is bootable
+
+-when booted up, will be in 16-bit Real mode due to legacy reasons
+  -addresses are 16-bits (with segmentation)
+    -physical address = segment * 16 + logical address (16-bits, or 64kB)
+      -physical address is 20 bits, or 1 MB of memory
+      -shifts 16-bit segment four bits (2^4)
+    -cs: code segment (used for jmp)
+    -ds: data segment (used for [...])
+    -ss: stack segment (used for push, pop)
+    -es: "extra" segment (used for movsb, ..)
+    -fs/gs: unused segments
+
+ex: mov eax, dword [addr] ; dword[ds:addr]
+    OR you can override
+    mov eax, dword [fs:addr]
+
+ex: mov fs, addr/16 ;---> error!
+    instead,
+    mov ax, addr/16 ;pre-divide by 16, because addr = seg * 16
+    mov fs, ax
+
+-memory map:
+
+-printing "Hello World!"
+  -memory-mapped I/O: video RAM is mapped at address xB8000
+    -if you write to that address in text mode, the text will be displayed as an ASCII character
+    -video RAM is located at 0xb8000
+    (1) set 80x25 character text mode
+    (2) setup fs segment to point to video RAM
+    (3) print text
+    (4) loop the following:
+      (a) get byte from string
+      (b) write out character to video RAM
+      (c) write attribute (white foreground and black background) to video RAM
+      (d) move to next character
+    (5) since there is no data section, msg: db "Hello, World!", 0
+    (6) pad with 0's: times 510 - ($ - $$) db 0
+    (7) end MBR with signature bytes: dw 0xaa55
+
+  -interrupts:
+    int. 0x10(16), sub. func. ah = 0, set video mode
+    int. 0x10, sub. func. ah = 2, move cursor
+    int. 0x10, sub. func. ah = 10, print character
+      -note: does NOT move the print position automatically, so alternate ah = 2 and ah = 10
+
+    (1) set 80x25 character text mode with subfunction 0
+    (2) set string address to string address and define x, y coordinates
+    (3) loop the following:
+      (a) load next character
+      (b) print string in one character position with subfunction 9
+      (c) define page number and number of copies
+      (d) move cursor to the right with subfunction 2
+      (4) since there is no data section, msg: db "Hello, World!", 0
+      (5) pad with 0's: times 510 - ($ - $$) db 0
+      (6) end MBR with signature bytes: dw 0xaa55
+
+-assembly for MBR:
+  (1) assemble into raw binary file:
+    yasm file_name.s -f bin -o file_name.bin
+  (2) create disk image:
+    dd if=file_name.bin of=file_name.dsk bs=512 count=2800
+  (3) start QEMU:
+    qemu-system-i386 -S -gdb tcp::9XXX -curses -drive format=raw,file=file_name.dsk
+    -curses indicates text-mode
+
+    and
+
+    gdb
+    target remote localhost:9XXX
+    -9XXX is any local port between 9000 and 10000, choose one that nobody else is using
+
+  (4) to escape from emulator, type ESC+2, then quit OR pkill the emulator
+
+MBR 16-Bit Real Mode -> 32-Bit Extended Mode
+--------------------------------------------
+(1) Create a two-stage bootloader
+  -the part in the MBR loads the real bootloader from somewhere else in the disk
+(2) disable the interrupts, because all of the interrupt code is in 16-bits
+  -therefore, will not be able to use interrupt method in 32-bit real mode
+(3) enable the A20 line
+(4) load the Global Descriptor table
+(5) switch 32-bit (step 1) protected (step 2) mode

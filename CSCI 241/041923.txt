@@ -1,0 +1,122 @@
+String Instructions (continued)
+-------------------------------
+-(mostly) read from [rsi], write to [rdi]
+-auto-increment rdi/rsi, whichever is used
+  -adds correct number of bytes to size (2 if word, 4 if dword, 8 if qword)
+-can be used with the repetition prefixes
+-"moving" instructions:
+  -lods*: move [rsi] -> rax, incrementing rsi
+  -stos*: move rax -> [rdi] incrementing rdi
+  -movs*: move [rsi] -> [rdi], incrementing both rsi and rdi
+-"comparing" instructions:
+  -scas*: compare rax w/ [rdi]
+  -cmps* compare [rsi] w/ [rdi]
+    -equivalent to cmp [rsi], [rdi], where [rsi] - [rdi]
+  -can be replaced by repe or repne
+    -decrements rcx to 0
+- note: * is replaced by b, w, d, or q
+
+ex:
+  strlen: ; goal is to look for null char that marks the end of the string
+    ; rdi = addr. of string
+    ; save starting addr.
+    mov rsi, rdi
+    mov al, 0 ; char to search for
+.begin_loop:
+  scasb ; cmp [rdi] w/ al
+  jne .begin_loop
+  dec rdi ; undo auto-increment to return to null
+  mov rax, rdi
+  sub rax, rsi
+  ret
+
+  OR
+
+  strlen: ; goal is to look for null char that marks the end of the string
+    ; rdi = addr. of string
+    ; save starting addr.
+    mov rsi, rdi
+    mov rcx, -1 ; in 2's complement, -1 corresponds to 11111111, which is a large number
+    mov al, 0 ; char to search for
+.begin_loop:
+  repne scasb
+  dec rdi ; undo auto-increment to return to null
+  mov rax, rdi
+  sub rax, rsi
+  ret
+
+
+ex in C:
+  char * strchr(char* s, char c)
+
+  in x86:
+  strchr:
+    ; rdi = addr. of string
+    ; sil = char to search for
+    call strlen
+    mov rcx, rax ; rcx now set to string length
+    mov al, sil
+
+    repne scasb ; repeats searching for character in al or decrements to 0
+    dec rdi
+    mov rax, rdi
+    ret
+
+  ex in C:
+    void replace(char* s, char c, char r);
+
+    in x86:
+    replace:
+      ; rdi = addr. of string
+      ; sil = char c
+      ; dl = replacement char.
+
+    .begin_loop:
+      cmp byte[rdi], 0
+      je .end ; arrived at end of string
+      cmp byte[rdi], sil (scasb)
+      jne .continue
+      mov byte [rdi], dl (stosb)
+
+    .continue:
+      inc rdi
+      jmp .begin_loop
+
+    mov al, sil ; char to find
+    .begin_loop:
+      cmp byte[rdi], 0
+      je .end
+      scasb
+      jne .begin_loop
+      mov byte [rdi - 1], dl
+      jmp .begin_loop
+    .end:
+      ret
+
+Instruction Set Architecture
+----------------------------
+-categories of instruction encoding:
+  -fixed wdith encoding z(MIPS 32)
+    -every single instruction takes up the same number of bytes (4)
+    -advantages:
+      -easy instruction fetch
+      -can use direct encoding (the CPU turns on the signal paths that are already mapped)
+    -disadvantages:
+      -less room for growth; can't add new instructions easily
+      -programs tend to be larger
+  -variable-width encoding (x84-64, x86)
+    -different instructions take up different numbers of bytes
+    -advantages:
+      -easy to expand instruction set
+      -smaller program sizes
+    -disadvantages:
+      -instruction fetch is harder/slower
+      -can't use direct encoding
+
+-MIPS32 instruction encoding:
+  -MIPS32 is a fixed-width encoding: all instructions are 32 bits
+  -R-format:
+  -I-format:
+  -J-format:
+
+-x86-64 instruction encoding:
